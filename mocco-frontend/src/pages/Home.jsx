@@ -99,11 +99,7 @@ function Home() {
             limit={8}
             handleClick={handleClick}
           />
-        ) : (
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
-            No best-selling products found right now.
-          </div>
-        )}
+        ) : null}
       </section>
 
       <section className="w-full py-12 px-5">

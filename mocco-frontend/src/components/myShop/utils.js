@@ -28,6 +28,7 @@ export const resolveImageUrl = (value) => {
 };
 
 export const initialFormState = (shop) => ({
+    _id: shop?._id || "",
     name: shop?.name || "",
     email: shop?.email || "",
     addresses: shop?.addresses || "",
