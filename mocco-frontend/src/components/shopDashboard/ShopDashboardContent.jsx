@@ -21,10 +21,17 @@ const ShopDashboardContent = ({
   couponLoading,
   onDeleteCoupon,
   orders,
+  shopOrdersLoading,
   withdrawals,
   availableBalance,
   pendingOrders,
   averageOrderValue,
+  totalRevenue,
+  totalSold,
+  recentOrders,
+  stats,
+  statsLoading,
+  statsError,
   bankAccounts,
   selectedBankAccountId,
   withdrawInput,
@@ -50,9 +57,17 @@ const ShopDashboardContent = ({
         sellerProducts={sellerProducts}
         sellerEvents={sellerEvents}
         orders={orders}
+        shopOrdersLoading={shopOrdersLoading}
         withdrawals={withdrawals}
         pendingOrders={pendingOrders}
         averageOrderValue={averageOrderValue}
+        totalRevenue={totalRevenue}
+        totalSold={totalSold}
+        availableBalance={availableBalance}
+        recentOrders={recentOrders}
+        stats={stats}
+        statsLoading={statsLoading}
+        statsError={statsError}
         formatMoney={formatMoney}
       />
     );

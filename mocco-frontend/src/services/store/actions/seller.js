@@ -6,19 +6,22 @@ import {
     updateSellerFail,
     updateSellerRequest,
     updateSellerSuccess,
+    fetchStatsRequest,
+    fetchStatsSuccess,
+    fetchStatsFail,
 } from "../slices/sellerAuthSlice";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export const loadSeller = () => async (dispatch) => {
     try {
-        dispatch(loadSellerRequest()); // Using the slice action
+        dispatch(loadSellerRequest());
 
         const { data } = await axios.get(`${backendUrl}/shop/seller`, {
             withCredentials: true,
         });
 
-        dispatch(loadSellerSuccess(data.shop)); // Support both payload keys
+        dispatch(loadSellerSuccess(data.shop));
     } catch (error) {
         const message =
             error?.response?.data?.message ||
@@ -54,5 +57,22 @@ export const updateSellerInfo = (formData) => async (dispatch) => {
 
         dispatch(updateSellerFail(message));
         return { success: false, message };
+    }
+};
+
+export const getDashboardStats = () => async (dispatch) => {
+    try {
+        dispatch(fetchStatsRequest());
+        const { data } = await axios.get(`${backendUrl}/shop/dashboard-stats`, {
+            withCredentials: true,
+        });
+        dispatch(fetchStatsSuccess(data.stats));
+        return data;
+    } catch (error) {
+        const message =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to fetch dashboard stats";
+        dispatch(fetchStatsFail(message));
     }
 };

@@ -6,6 +6,8 @@ import { dashboardItems } from "../components/shopDashboard/constants/dashboardI
 import { getProducts } from "../services/store/actions/product";
 import { getEvents } from "../services/store/actions/event";
 import { deleteCoupon, getCoupons } from "../services/store/actions/coupon";
+import { getShopOrders } from "../services/store/actions/order";
+import { getDashboardStats } from "../services/store/actions/seller";
 
 const formatMoney = (amount = 0) => `$${Number(amount || 0).toFixed(2)}`;
 
@@ -31,6 +33,9 @@ const ShopDashboard = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { seller } = useSelector((state) => state.seller);
+  const { stats, statsLoading, statsError } = useSelector(
+    (state) => state.seller,
+  );
   const { products, isLoading: productLoading } = useSelector(
     (state) => state.product,
   );
@@ -38,28 +43,24 @@ const ShopDashboard = () => {
   const { coupons, getLoading: couponLoading } = useSelector(
     (state) => state.coupon,
   );
+  const { shopOrders, shopOrdersLoading } = useSelector((state) => state.order);
 
-  // Fetch products, events, and coupons for the seller on mount
+  // Fetch all seller data on mount
   useEffect(() => {
     if (seller?._id) {
       dispatch(getProducts(seller._id));
       dispatch(getEvents(seller._id));
       dispatch(getCoupons(seller._id));
+      dispatch(getShopOrders());
+      dispatch(getDashboardStats());
     }
   }, [seller?._id, dispatch]);
 
-  const [withdrawInput, setWithdrawInput] = useState("4");
+  const [withdrawInput, setWithdrawInput] = useState("");
   const [showBankModal, setShowBankModal] = useState(false);
-  const [bankAccounts, setBankAccounts] = useState([
-    {
-      id: "bank-1",
-      bankName: "UBL - United Bank Limited",
-      accountHolderName: "Roanna Patton",
-      accountMasked: "**** **** 9048",
-    },
-  ]);
+  const [bankAccounts, setBankAccounts] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
-  const [selectedBankAccountId, setSelectedBankAccountId] = useState("bank-1");
+  const [selectedBankAccountId, setSelectedBankAccountId] = useState("");
 
   const queryTab = new URLSearchParams(location.search).get("tab");
   const activeView = dashboardItems.some((item) => item.id === queryTab)
@@ -103,36 +104,40 @@ const ShopDashboard = () => {
     }
   };
 
-  const orders = [
-    {
-      id: "69d41243b948a...",
-      customer: "Masab Ashraf",
-      items: "Enim assumenda ullam + ...",
-      total: 236,
-      status: "processing",
-      qty: 5,
-      date: "Apr 7, 2026",
-    },
-    {
-      id: "69abd90388124d...",
-      customer: "Masab Ashraf",
-      items: "Enim assumenda ullam, ...",
-      total: 178,
-      status: "shipping",
-      qty: 3,
-      date: "Mar 7, 2026",
-    },
-  ];
+  // ── Derived dashboard stats from real backend data ─────────────────────────
+  const totalOrders =
+    stats?.totalOrders ?? (Array.isArray(shopOrders) ? shopOrders.length : 0);
 
-  const availableBalance = 10;
-  const pendingOrders = orders.filter(
-    (item) => item.status !== "delivered",
-  ).length;
+  const pendingOrders =
+    stats?.pendingOrders ??
+    (() => {
+      const terminalStatuses = new Set([
+        "Delivered",
+        "Cancelled",
+        "Refund Success",
+        "Returned",
+      ]);
+      return Array.isArray(shopOrders)
+        ? shopOrders.filter((o) => !terminalStatuses.has(o.status)).length
+        : 0;
+    })();
+
   const averageOrderValue =
-    orders.length > 0
-      ? orders.reduce((sum, item) => sum + Number(item.total || 0), 0) /
-        orders.length
-      : 0;
+    stats?.averageOrderValue ??
+    (() => {
+      const orders = Array.isArray(shopOrders) ? shopOrders : [];
+      return orders.length > 0
+        ? orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0) /
+            orders.length
+        : 0;
+    })();
+
+  const totalRevenue = stats?.totalRevenue ?? 0;
+  const totalSold = stats?.totalSold ?? 0;
+  const availableBalance = stats?.availableBalance ?? 0;
+  const recentOrders = stats?.recentOrders ?? [];
+
+  // ── Withdraw logic ─────────────────────────────────────────────────────────
   const withdrawAmount = Number(withdrawInput || 0);
   const fee = withdrawAmount * 0.1;
   const userReceives = Math.max(withdrawAmount - fee, 0);
@@ -217,11 +222,18 @@ const ShopDashboard = () => {
       sellerCoupons={sellerCoupons}
       couponLoading={couponLoading}
       onDeleteCoupon={handleDeleteCoupon}
-      orders={orders}
+      orders={Array.isArray(shopOrders) ? shopOrders : []}
+      shopOrdersLoading={shopOrdersLoading}
       withdrawals={withdrawals}
       availableBalance={availableBalance}
       pendingOrders={pendingOrders}
       averageOrderValue={averageOrderValue}
+      totalRevenue={totalRevenue}
+      totalSold={totalSold}
+      recentOrders={recentOrders}
+      stats={stats}
+      statsLoading={statsLoading}
+      statsError={statsError}
       bankAccounts={bankAccounts}
       selectedBankAccountId={selectedBankAccountId}
       withdrawInput={withdrawInput}

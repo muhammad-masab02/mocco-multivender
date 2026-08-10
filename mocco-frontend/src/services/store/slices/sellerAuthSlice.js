@@ -7,13 +7,17 @@ const initialState = {
     seller: null,
     error: null,
     success: false,
+
+    // Dashboard stats
+    stats: null,
+    statsLoading: false,
+    statsError: null,
 };
 
 const sellerSlice = createSlice({
     name: "seller",
     initialState,
     reducers: {
-        // These replace your LoadSellerRequest, LoadSellerSuccess, etc.
         loadSellerRequest: (state) => {
             state.isLoading = true;
         },
@@ -45,6 +49,19 @@ const sellerSlice = createSlice({
             state.error = action.payload;
             state.success = false;
         },
+        // Dashboard stats
+        fetchStatsRequest: (state) => {
+            state.statsLoading = true;
+            state.statsError = null;
+        },
+        fetchStatsSuccess: (state, action) => {
+            state.statsLoading = false;
+            state.stats = action.payload;
+        },
+        fetchStatsFail: (state, action) => {
+            state.statsLoading = false;
+            state.statsError = action.payload;
+        },
         // Clear error utility
         clearErrors: (state) => {
             state.error = null;
@@ -60,6 +77,9 @@ export const {
     updateSellerRequest,
     updateSellerSuccess,
     updateSellerFail,
+    fetchStatsRequest,
+    fetchStatsSuccess,
+    fetchStatsFail,
     clearErrors
 } = sellerSlice.actions;
 

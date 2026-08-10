@@ -8,6 +8,7 @@ import {
   logoutShop,
   registerShop,
   updateSellerInfo,
+  getDashboardStats,
 } from "../controllers/shop.controller.js";
 import upload from "../../multer.js";
 import isSellerAuthenticated from "../middlewares/sellerAuth.js";
@@ -26,5 +27,6 @@ shopRouter.put(
   upload.single("file"),
   updateSellerInfo,
 );
+shopRouter.get("/dashboard-stats", isSellerAuthenticated, getDashboardStats);
 
 export default shopRouter;

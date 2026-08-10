@@ -1,4 +1,7 @@
 import Shop from "../models/shop.model.js";
+import Product from "../models/product.model.js";
+import Order from "../models/order.model.js";
+import Event from "../models/event.model.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
 import { createActivationToken } from "../utils/createToken.js";
 import sendMail from "../utils/sendMail.js";
@@ -304,6 +307,95 @@ const updateSellerInfo = async (req, res, next) => {
     }
 };
 
+// GET /api/v1/shop/dashboard-stats (seller auth)
+// Returns all key dashboard metrics derived from real data
+const getDashboardStats = async (req, res, next) => {
+    try {
+        const sellerId = req.seller._id;
+
+        // ── 1. Products ────────────────────────────────────────────────────────
+        const products = await Product.find({ shop: sellerId });
+        const totalProducts = products.length;
+        const totalSold = products.reduce((sum, p) => sum + (p.total_sell || 0), 0);
+
+        // ── 2. Active Events ───────────────────────────────────────────────────
+        const now = new Date();
+        const activeEvents = await Event.countDocuments({
+            shop: sellerId,
+            status: "Running",
+            startDate: { $lte: now },
+            endDate: { $gte: now },
+        });
+
+        // ── 3. All shop orders (filter by seller's products) ──────────────────
+        const allOrders = await Order.find()
+            .populate({
+                path: "items.productId",
+                select: "shop",
+            })
+            .sort({ createdAt: -1 });
+
+        const shopOrders = allOrders.filter(order =>
+            order.items.some(item => {
+                const itemShop = item.productId?.shop?.toString();
+                return itemShop === sellerId.toString();
+            })
+        );
+
+        const totalOrders = shopOrders.length;
+
+        // ── 4. Revenue (Delivered orders, 10% platform fee deducted) ─────────
+        const deliveredOrders = shopOrders.filter(o => o.status === "Delivered");
+        const grossRevenue = deliveredOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+        const totalRevenue = grossRevenue * 0.9; // After 10% platform fee
+
+        // ── 5. Pending Orders (not delivered, not cancelled) ──────────────────
+        const terminalStatuses = new Set(["Delivered", "Cancelled", "Refund Success", "Returned"]);
+        const pendingOrders = shopOrders.filter(o => !terminalStatuses.has(o.status)).length;
+
+        // ── 6. Average Order Value ─────────────────────────────────────────────
+        const averageOrderValue = totalOrders > 0
+            ? shopOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0) / totalOrders
+            : 0;
+
+        // ── 7. Recent Orders (last 10, enriched for UI) ────────────────────────
+        const recentOrders = shopOrders.slice(0, 10).map(o => ({
+            _id: o._id,
+            status: o.status,
+            totalAmount: o.totalAmount,
+            createdAt: o.createdAt,
+            itemCount: o.items.length,
+            paymentMethod: o.paymentInfo?.method,
+        }));
+
+        res.status(200).json({
+            success: true,
+            stats: {
+                totalProducts,
+                totalOrders,
+                totalRevenue,
+                grossRevenue,
+                activeEvents,
+                pendingOrders,
+                averageOrderValue,
+                totalSold,
+                deliveredOrdersCount: deliveredOrders.length,
+                recentOrders,
+                // NOTE: availableBalance and withdrawalRequests are not yet
+                // implemented in the backend data model. They require a
+                // Withdrawal model and balance tracking logic.
+                availableBalance: null,
+                withdrawalRequests: null,
+            },
+        });
+    } catch (error) {
+        console.error("Error in getDashboardStats:", error);
+        return next(
+            new ErrorHandler("Failed to fetch dashboard stats! " + error.message, 500)
+        );
+    }
+};
+
 export {
     registerShop,
     activateShopEmail,
@@ -311,5 +403,6 @@ export {
     getSeller,
     getShopInfo,
     logoutShop,
-    updateSellerInfo
+    updateSellerInfo,
+    getDashboardStats,
 };
