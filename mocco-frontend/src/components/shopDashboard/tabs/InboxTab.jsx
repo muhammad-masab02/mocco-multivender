@@ -17,7 +17,11 @@ import {
   getMessages,
   createMessage,
 } from "../../../services/store/actions/conversation";
-import { setActiveConversation } from "../../../services/store/slices/conversationSlice";
+import {
+  setActiveConversation,
+  addRealtimeMessage,
+} from "../../../services/store/slices/conversationSlice";
+import { socket } from "../../../socket";
 
 const InboxTab = () => {
   const dispatch = useDispatch();
@@ -37,8 +41,51 @@ const InboxTab = () => {
   const [newMessageText, setNewMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileShowChat, setMobileShowChat] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
-  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+
+  const scrollToBottom = (smooth = true) => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      });
+    }
+  };
+
+  // Scroll to bottom whenever messages or active conversation changes
+  useEffect(() => {
+    const timer = setTimeout(scrollToBottom, 50);
+    return () => clearTimeout(timer);
+  }, [messages, activeConversation?._id]);
+
+  // Initialize Socket.IO connection and listeners
+  useEffect(() => {
+    if (!seller?._id) return;
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit("addUser", seller._id);
+
+    const handleGetUsers = (users) => {
+      setOnlineUsers(users || []);
+    };
+
+    const handleGetMessage = (data) => {
+      dispatch(addRealtimeMessage(data));
+    };
+
+    socket.on("getUsers", handleGetUsers);
+    socket.on("getMessage", handleGetMessage);
+
+    return () => {
+      socket.off("getUsers", handleGetUsers);
+      socket.off("getMessage", handleGetMessage);
+    };
+  }, [seller?._id, dispatch]);
 
   // Fetch seller conversations on mount
   useEffect(() => {
@@ -99,7 +146,22 @@ const InboxTab = () => {
     setNewMessageText("");
 
     const res = await dispatch(createMessage(payload));
-    if (!res?.success) {
+    if (res?.success && res?.message) {
+      const receiverId = activeConversation.members.find(
+        (m) => String(m) !== String(seller._id),
+      );
+
+      socket.emit("sendMessage", {
+        senderId: seller._id,
+        receiverId,
+        text: textToSend,
+        // images,
+        conversationId: activeConversation._id,
+        createdAt: res.message.createdAt || new Date().toISOString(),
+        _id: res.message._id,
+      });
+      setTimeout(() => scrollToBottom(), 50);
+    } else {
       toast.error(res?.message || "Failed to send message.");
       setNewMessageText(textToSend);
     }
@@ -124,7 +186,7 @@ const InboxTab = () => {
   };
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[650px] flex flex-col">
+    <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-162.5 flex flex-col">
       {/* Tab Header Banner */}
       <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50/50">
         <div className="flex items-center gap-3">
@@ -170,7 +232,7 @@ const InboxTab = () => {
           </div>
 
           {/* Conversations Scroll Area */}
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-[550px]">
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-137.5">
             {conversationsLoading ? (
               <div className="p-10 flex flex-col items-center justify-center text-slate-400 gap-2">
                 <Loader2 className="animate-spin" size={24} />
@@ -289,10 +351,25 @@ const InboxTab = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Customer Active
-                  </span>
+                  {onlineUsers.some(
+                    (u) =>
+                      String(u.userId) ===
+                      String(
+                        activeConversation?.members?.find(
+                          (m) => String(m) !== String(seller?._id),
+                        ),
+                      ),
+                  ) ? (
+                    <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      Online
+                    </span>
+                  ) : (
+                    <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-medium border border-slate-200">
+                      <span className="w-2 h-2 rounded-full bg-slate-400" />
+                      Offline
+                    </span>
+                  )}
                   <button
                     onClick={handleCloseConversation}
                     className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer"
@@ -303,7 +380,10 @@ const InboxTab = () => {
               </div>
 
               {/* Chat Messages Body */}
-              <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 max-h-[460px] bg-slate-50/20">
+              <div
+                ref={messagesContainerRef}
+                className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 max-h-115 bg-slate-50/20"
+              >
                 {messagesLoading ? (
                   <div className="h-64 flex flex-col items-center justify-center text-slate-400 gap-2">
                     <Loader2 className="animate-spin" size={24} />
@@ -350,7 +430,6 @@ const InboxTab = () => {
                     );
                   })
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Chat Input Footer */}

@@ -17,7 +17,11 @@ import {
   getMessages,
   createMessage,
 } from "../../services/store/actions/conversation";
-import { setActiveConversation } from "../../services/store/slices/conversationSlice";
+import {
+  setActiveConversation,
+  addRealtimeMessage,
+} from "../../services/store/slices/conversationSlice";
+import { socket } from "../../socket";
 
 const UserInboxTab = () => {
   const dispatch = useDispatch();
@@ -37,17 +41,51 @@ const UserInboxTab = () => {
   const [newMessageText, setNewMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileShowChat, setMobileShowChat] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
-  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
-  // Auto scroll to bottom when messages update
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (smooth = true) => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      });
+    }
   };
 
+  // Scroll to bottom whenever messages or active conversation changes
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const timer = setTimeout(scrollToBottom, 50);
+    return () => clearTimeout(timer);
+  }, [messages, activeConversation?._id]);
+
+  // Initialize Socket.IO connection and listeners
+  useEffect(() => {
+    if (!user?._id) return;
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit("addUser", user._id);
+
+    const handleGetUsers = (users) => {
+      setOnlineUsers(users || []);
+    };
+
+    const handleGetMessage = (data) => {
+      dispatch(addRealtimeMessage(data));
+    };
+
+    socket.on("getUsers", handleGetUsers);
+    socket.on("getMessage", handleGetMessage);
+
+    return () => {
+      socket.off("getUsers", handleGetUsers);
+      socket.off("getMessage", handleGetMessage);
+    };
+  }, [user?._id, dispatch]);
 
   // Fetch user conversations on mount / user load
   useEffect(() => {
@@ -108,7 +146,22 @@ const UserInboxTab = () => {
     setNewMessageText("");
 
     const res = await dispatch(createMessage(payload));
-    if (!res?.success) {
+    if (res?.success && res?.message) {
+      const receiverId = activeConversation.members.find(
+        (m) => String(m) !== String(user._id),
+      );
+
+      socket.emit("sendMessage", {
+        senderId: user._id,
+        receiverId,
+        text: textToSend,
+        // images,
+        conversationId: activeConversation._id,
+        createdAt: res.message.createdAt || new Date().toISOString(),
+        _id: res.message._id,
+      });
+      setTimeout(() => scrollToBottom(), 50);
+    } else {
       toast.error(res?.message || "Failed to send message.");
       setNewMessageText(textToSend);
     }
@@ -299,6 +352,25 @@ const UserInboxTab = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {onlineUsers.some(
+                    (u) =>
+                      String(u.userId) ===
+                      String(
+                        activeConversation?.members?.find(
+                          (m) => String(m) !== String(user?._id),
+                        ),
+                      ),
+                  ) ? (
+                    <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      Online
+                    </span>
+                  ) : (
+                    <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-medium border border-slate-200">
+                      <span className="w-2 h-2 rounded-full bg-slate-400" />
+                      Offline
+                    </span>
+                  )}
                   <button
                     onClick={handleCloseConversation}
                     className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer"
@@ -309,7 +381,10 @@ const UserInboxTab = () => {
               </div>
 
               {/* Chat Messages Body */}
-              <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 max-h-105 bg-slate-50/20">
+              <div
+                ref={messagesContainerRef}
+                className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 max-h-105 bg-slate-50/20"
+              >
                 {messagesLoading ? (
                   <div className="h-64 flex flex-col items-center justify-center text-slate-400 gap-2">
                     <Loader2 className="animate-spin" size={24} />
@@ -356,7 +431,6 @@ const UserInboxTab = () => {
                     );
                   })
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Chat Input Footer */}

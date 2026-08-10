@@ -73,6 +73,47 @@ const conversationSlice = createSlice({
       state.error = action.payload;
     },
 
+    // Receive message in real-time via Socket.IO
+    addRealtimeMessage: (state, action) => {
+      const message = action.payload;
+
+      const isActiveConv =
+        state.activeConversation &&
+        (state.activeConversation._id === message.conversationId ||
+          state.activeConversation.members?.includes(message.senderId) ||
+          state.activeConversation.members?.includes(message.sender));
+
+      if (isActiveConv) {
+        const exists = state.messages.some(
+          (m) => String(m._id) === String(message._id)
+        );
+        if (!exists) {
+          state.messages.push(message);
+        }
+        state.activeConversation.lastMessage = message.text;
+        state.activeConversation.updatedAt =
+          message.createdAt || new Date().toISOString();
+      }
+
+      const convIndex = state.conversations.findIndex(
+        (c) =>
+          c._id === message.conversationId ||
+          (c.members?.includes(message.senderId) &&
+            c.members?.includes(message.receiverId)) ||
+          (c.members?.includes(message.sender) &&
+            c.members?.includes(message.receiverId))
+      );
+
+      if (convIndex !== -1) {
+        state.conversations[convIndex].lastMessage = message.text;
+        state.conversations[convIndex].updatedAt =
+          message.createdAt || new Date().toISOString();
+
+        const [movedConv] = state.conversations.splice(convIndex, 1);
+        state.conversations.unshift(movedConv);
+      }
+    },
+
     clearConversationErrors: (state) => {
       state.error = null;
     },
@@ -90,6 +131,7 @@ export const {
   sendMessageRequest,
   sendMessageSuccess,
   sendMessageFail,
+  addRealtimeMessage,
   clearConversationErrors,
 } = conversationSlice.actions;
 

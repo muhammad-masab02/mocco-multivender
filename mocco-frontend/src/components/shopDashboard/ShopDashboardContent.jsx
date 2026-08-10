@@ -135,8 +135,12 @@ const ShopDashboardContent = ({
     return <InboxTab />;
   }
 
-  // Fallback: render InboxTab
-  return <InboxTab />;
+  // Fallback: render some default content or an error message if the activeView doesn't match any known tab
+  return (
+    <div className="p-4">
+      <p>Content not found :(</p>
+    </div>
+  );
 };
 
 export default ShopDashboardContent;
