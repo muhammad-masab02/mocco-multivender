@@ -21,6 +21,8 @@ import {
   setActiveConversation,
   addRealtimeMessage,
 } from "../../services/store/slices/conversationSlice";
+// import { formatTime } from "../myShop/utils";
+import { getImageUrl } from "../../utils/imageUrl";
 import { socket } from "../../socket";
 
 const UserInboxTab = () => {
@@ -271,7 +273,7 @@ const UserInboxTab = () => {
                     <div className="relative shrink-0">
                       {shopAvatar ? (
                         <img
-                          src={shopAvatar}
+                          src={getImageUrl(shopAvatar)}
                           alt={shopName}
                           className="w-11 h-11 rounded-full object-cover border border-slate-200"
                         />
@@ -328,7 +330,7 @@ const UserInboxTab = () => {
                   <div className="relative">
                     {activeConversation.seller?.avatar?.url ? (
                       <img
-                        src={activeConversation.seller.avatar.url}
+                        src={getImageUrl(activeConversation.seller.avatar.url)}
                         alt={activeConversation.seller?.name}
                         className="w-10 h-10 rounded-full object-cover border border-slate-200"
                       />

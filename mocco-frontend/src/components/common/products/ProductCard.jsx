@@ -21,6 +21,8 @@ import {
 import ProductDetailViewModal from "./ProductDetailViewModal.jsx";
 import { createConversation } from "../../../services/store/actions/conversation.js";
 
+import { getImageUrl } from "../../../utils/imageUrl.js";
+
 const ProductCard = ({ product, handleClick }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -33,7 +35,15 @@ const ProductCard = ({ product, handleClick }) => {
   const [productDetailView, setProductDetailView] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  const productImage = product?.image_Url?.[0]?.url;
+  const rawImg =
+    product?.images?.[0]?.url ||
+    product?.image_Url?.[0]?.url ||
+    product?.image_Url ||
+    product?.images?.[0];
+  const productImage = getImageUrl(
+    rawImg,
+    "https://dummyimage.com/300x300/e2e8f0/64748b.png&text=Product",
+  );
   const productPrice = Number(product?.discount_price || product?.price || 0);
   const originalPrice = Number(product?.price || 0);
   const rating = Number(product?.rating || product?.shop?.ratings || 0);

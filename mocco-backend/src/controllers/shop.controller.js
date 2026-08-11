@@ -7,6 +7,7 @@ import { createActivationToken } from "../utils/createToken.js";
 import sendMail from "../utils/sendMail.js";
 import sendToken from "../utils/jwtToken.js";
 import jwt from "jsonwebtoken";
+import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
 // shop create 
 const registerShop = async (req, res, next) => {
@@ -36,8 +37,18 @@ const registerShop = async (req, res, next) => {
             return next(new ErrorHandler("Shop already exists!", 400));
         }
 
-        // Handle avatar upload
-        const fileName = req.file?.filename;
+        // Handle avatar upload via Cloudinary
+        let avatar = {
+            public_id: "shop-avatar",
+            url: "https://dummyimage.com/200x200/e2e8f0/64748b.png&text=Shop",
+        };
+
+        if (req.file) {
+            const cloudRes = await uploadToCloudinary(req.file, "mocco/shops");
+            if (cloudRes) {
+                avatar = cloudRes;
+            }
+        }
 
         // Create shop object
         const shop = {
@@ -48,12 +59,7 @@ const registerShop = async (req, res, next) => {
             description,
             addresses,
             zipCode,
-            avatar: {
-                public_id: fileName || "default-avatar",
-                url: fileName
-                    ? `/uploads/${fileName}`
-                    : "https://dummyimage.com/200x200/e2e8f0/64748b.png&text=Shop",
-            },
+            avatar,
         };
 
         // create activation token
@@ -280,13 +286,13 @@ const updateSellerInfo = async (req, res, next) => {
         // Check if an avatar file was uploaded via req.file or req.files
         const file = req.file || (req.files && req.files[0]);
         if (file) {
-            const fileName = file.filename;
-            seller.avatar = {
-                public_id: fileName || "shop-avatar",
-                url: fileName
-                    ? `/uploads/${fileName}`
-                    : seller.avatar?.url || "https://dummyimage.com/200x200/e2e8f0/64748b.png&text=Shop",
-            };
+            if (seller.avatar?.public_id) {
+                await deleteFromCloudinary(seller.avatar.public_id);
+            }
+            const cloudRes = await uploadToCloudinary(file, "mocco/shops");
+            if (cloudRes) {
+                seller.avatar = cloudRes;
+            }
         }
 
         await seller.save();

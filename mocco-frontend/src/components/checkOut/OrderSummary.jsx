@@ -9,7 +9,7 @@ import {
 import { validateCoupon } from "../../services/store/actions/checkout";
 import toast from "react-hot-toast";
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import { getImageUrl } from "../../utils/imageUrl.js";
 
 const OrderSummary = () => {
   const dispatch = useDispatch();
@@ -77,12 +77,9 @@ const OrderSummary = () => {
                 <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-50 border border-gray-100">
                   {imgUrl ? (
                     <img
-                      src={`${backendUrl.replace("/api/v1", "")}${imgUrl}`}
+                      src={getImageUrl(imgUrl)}
                       alt={product?.name}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                      }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-300">

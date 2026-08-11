@@ -1,4 +1,3 @@
-// register user controller
 import jwt from "jsonwebtoken";
 import sendMail from "../utils/sendMail.js";
 import User from "../models/user.model.js";
@@ -6,6 +5,7 @@ import ErrorHandler from "../utils/ErrorHandler.js";
 import sendToken from "../utils/jwtToken.js";
 import { createActivationToken } from "../utils/createToken.js";
 import catchAsyncErrors from "../middlewares/CatchAsyncErrors.js";
+import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
 const registerUser = catchAsyncErrors(async (req, res, next) => {
   try {
@@ -23,20 +23,25 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("User already exists!", 400));
     }
 
-    // Handle avatar upload
-    const fileName = req.file?.filename;
+    // Handle avatar upload via Cloudinary
+    let avatar = {
+      public_id: "default-avatar",
+      url: "https://dummyimage.com/200x200/e2e8f0/64748b.png&text=User",
+    };
+
+    if (req.file) {
+      const cloudRes = await uploadToCloudinary(req.file, "mocco/users");
+      if (cloudRes) {
+        avatar = cloudRes;
+      }
+    }
 
     // Create user object
     const user = {
       name,
       email,
       password,
-      avatar: {
-        public_id: fileName || "default-avatar",
-        url: fileName
-          ? `/uploads/${fileName}`
-          : "https://dummyimage.com/200x200/e2e8f0/64748b.png&text=User",
-      },
+      avatar,
     };
 
     // create activation token
@@ -215,22 +220,25 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Invalid current password", 400));
     }
 
-    // if (req.file) {
-    //   const fileName = req.file.filename;
-    //   user.avatar = {
-    //     public_id: fileName,
-    //     url: `/uploads/${fileName}`,
-    //   };
-    // }
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (phoneNumber) updateData.phoneNumber = phoneNumber;
+
+    if (req.file) {
+      if (user.avatar?.public_id) {
+        await deleteFromCloudinary(user.avatar.public_id);
+      }
+      const cloudRes = await uploadToCloudinary(req.file, "mocco/users");
+      if (cloudRes) {
+        updateData.avatar = cloudRes;
+      }
+    }
 
     // Update only the fields that are provided in the request body
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
-      {
-        name,
-        email,
-        phoneNumber,
-      },
+      updateData,
       { returnDocument: 'after', runValidators: true }
     );
 

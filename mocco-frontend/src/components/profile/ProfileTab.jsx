@@ -2,6 +2,7 @@ import React from "react";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import CustomButton from "../common/CustomButton";
 import CustomFormInput from "../common/inputs/CustomFormInput";
+import { getImageUrl } from "../../utils/imageUrl.js";
 
 const ProfileTab = ({
   profileForm,
@@ -33,7 +34,7 @@ const ProfileTab = ({
           {avatarPreview ? (
             <div className="w-full h-full rounded-full overflow-hidden">
               <img
-                src={avatarPreview}
+                src={getImageUrl(avatarPreview)}
                 alt="User Avatar"
                 className="w-full h-full object-cover"
               />

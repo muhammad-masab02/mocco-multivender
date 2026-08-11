@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CustomButton from "../common/CustomButton";
+import { getImageUrl } from "../../utils/imageUrl.js";
 
 const formatMoney = (value) => {
   const numberValue = Number(value || 0);
@@ -41,10 +42,15 @@ const getCountdownParts = (endDate, nowTime = Date.now()) => {
 const formatCountdownValue = (value) => String(value).padStart(2, "0");
 
 const getCardData = (eventProduct = {}) => {
-  const imageUrl =
+  const rawImg =
     eventProduct?.images?.[0]?.url ||
     eventProduct?.image_Url?.[0]?.url ||
-    "https://dummyimage.com/600x600/f3f4f6/9ca3af.png&text=Event";
+    eventProduct?.images?.[0];
+
+  const imageUrl = getImageUrl(
+    rawImg,
+    "https://dummyimage.com/600x600/f3f4f6/9ca3af.png&text=Event",
+  );
 
   const title = eventProduct?.name || "Event Product";
   const category = eventProduct?.category || "Others";
@@ -178,9 +184,14 @@ const EventCard = ({
                   { label: "Mins", value: countdown?.minutes ?? "--" },
                   { label: "Secs", value: countdown?.seconds ?? "--" },
                 ].map((item) => (
-                  <div key={item.label} className="rounded-lg bg-white px-2 py-2 shadow-sm">
+                  <div
+                    key={item.label}
+                    className="rounded-lg bg-white px-2 py-2 shadow-sm"
+                  >
                     <div className="text-sm font-bold text-slate-900">
-                      {typeof item.value === "number" ? formatCountdownValue(item.value) : item.value}
+                      {typeof item.value === "number"
+                        ? formatCountdownValue(item.value)
+                        : item.value}
                     </div>
                     <div className="text-[10px] uppercase tracking-wide text-slate-500">
                       {item.label}
@@ -189,7 +200,11 @@ const EventCard = ({
                 ))}
               </div>
               <p className="mt-2 text-center text-[11px] text-slate-500">
-                {countdown?.isExpired ? "Event ended" : countdownReady ? "Ends soon" : "Loading countdown"}
+                {countdown?.isExpired
+                  ? "Event ended"
+                  : countdownReady
+                    ? "Ends soon"
+                    : "Loading countdown"}
               </p>
             </div>
           </div>
@@ -275,7 +290,9 @@ const EventCard = ({
                 className="rounded-2xl border border-red-100 bg-white px-3 py-3 text-center shadow-sm"
               >
                 <div className="text-lg sm:text-xl font-bold text-slate-900">
-                  {typeof item.value === "number" ? formatCountdownValue(item.value) : item.value}
+                  {typeof item.value === "number"
+                    ? formatCountdownValue(item.value)
+                    : item.value}
                 </div>
                 <div className="mt-1 text-[10px] sm:text-xs uppercase tracking-[0.16em] text-slate-500">
                   {item.label}
@@ -284,18 +301,15 @@ const EventCard = ({
             ))}
           </div>
 
-          <p className="mt-3 text-xs sm:text-sm font-medium text-red-600">
-          </p>
+          <p className="mt-3 text-xs sm:text-sm font-medium text-red-600"></p>
 
           <div className="mt-5 rounded-xl bg-linear-to-r from-red-50 via-rose-50 to-orange-50 border border-red-100 px-4 py-3 text-center">
             <span className="text-red-700 text-base font-semibold">
-            {countdown?.isExpired
-              ? "This event has ended"
-              : countdownReady
-              ? "Hurry! Limited time left"
-                : "Countdown loading"}
-            
-              
+              {countdown?.isExpired
+                ? "This event has ended"
+                : countdownReady
+                  ? "Hurry! Limited time left"
+                  : "Countdown loading"}
             </span>
           </div>
 

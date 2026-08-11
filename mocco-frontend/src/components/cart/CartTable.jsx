@@ -8,6 +8,7 @@ import {
 } from "../../services/store/actions/cart";
 import { CircularProgress } from "@mui/material";
 import { Link } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUrl.js";
 
 const CartTable = ({ cartItems }) => {
   const dispatch = useDispatch();
@@ -50,6 +51,7 @@ const CartTable = ({ cartItems }) => {
 
         const price = product.discount_price || product.price || 0;
         const productId = product._id || product.id;
+        const imgUrl = product?.images?.[0]?.url;
 
         return (
           <div
@@ -66,13 +68,7 @@ const CartTable = ({ cartItems }) => {
                 ×
               </button>
               <img
-                src={
-                  // product?.images?.[0]
-                  //   ? `${backendUrl.replace("/api/v1", "")}${product.images[0]}`
-                  //   :
-                  // "https://dummyimage.com/600x400/e2e8f0/64748b.png&text=No+Image"
-                  "about-us.png"
-                }
+                src={getImageUrl(imgUrl)}
                 alt={product.name}
                 className="w-14 h-14 object-cover rounded hidden sm:block"
               />

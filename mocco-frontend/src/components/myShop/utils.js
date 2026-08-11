@@ -17,14 +17,13 @@ export const formatJoinedDate = (value) => {
     });
 };
 
+import { getImageUrl } from "../../utils/imageUrl.js";
+
 export const resolveImageUrl = (value) => {
-    if (!value)
-        return "https://dummyimage.com/240x240/e2e8f0/64748b.png&text=Shop";
-
-    if (String(value).startsWith("http")) return value;
-    if (String(value).startsWith("/")) return `${backendUrl}${value}`;
-
-    return `${backendUrl}/${value}`;
+    return getImageUrl(
+        value,
+        "https://dummyimage.com/240x240/e2e8f0/64748b.png&text=Shop"
+    );
 };
 
 export const initialFormState = (shop) => ({

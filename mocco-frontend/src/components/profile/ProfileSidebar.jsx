@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { getImageUrl } from "../../utils/imageUrl.js";
 
 const ProfileSidebar = ({
   userName,
@@ -35,7 +36,7 @@ const ProfileSidebar = ({
           {avatarPreview ? (
             <div className="rounded-2xl shadow-md ring-4 ring-white transform hover:scale-105 transition-transform">
               <img
-                src={avatarPreview}
+                src={getImageUrl(avatarPreview)}
                 alt="Avatar"
                 className="w-14 h-14 rounded-2xl object-cover"
               />

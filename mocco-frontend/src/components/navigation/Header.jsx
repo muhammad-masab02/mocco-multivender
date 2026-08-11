@@ -24,6 +24,8 @@ import { initGuestCart } from "../../services/store/actions/cart.js";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
+import { getImageUrl } from "../../utils/imageUrl.js";
+
 const Header = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -310,8 +312,10 @@ const Header = () => {
                 {user?.avatar?.url ? (
                   <div className="w-9 h-9 rounded-full overflow-hidden border border-red-200 shadow-sm">
                     <img
-                      // src={`http://localhost:8000/api/v1${user.avatar.url}`}
-                      src="about-us.png"
+                      src={getImageUrl(
+                        user.avatar.url,
+                        "https://dummyimage.com/200x200/e2e8f0/64748b.png&text=User",
+                      )}
                       alt="Profile"
                       className="w-full h-full object-cover"
                     />

@@ -3,6 +3,7 @@ import ErrorHandler from "../utils/ErrorHandler.js";
 import Product from "../models/product.model.js";
 import Event from "../models/event.model.js";
 import Shop from "../models/shop.model.js";
+import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
 // get all products across shops (for storefront/home pages)
 const getAllProducts = catchAsyncErrors(async (req, res, next) => {
@@ -100,11 +101,13 @@ const createProduct = catchAsyncErrors(async (req, res, next) => {
             });
         }
 
-        // Handle images (multer gives req.files)
-        const images = req.files.map((file) => ({
-            public_id: file.filename,
-            url: file.path,
-        }));
+        // Handle images via Cloudinary upload
+        if (!req.files || req.files.length === 0) {
+            return next(new ErrorHandler("Please upload at least one image for the product.", 400));
+        }
+
+        const uploadPromises = req.files.map(file => uploadToCloudinary(file, "mocco/products"));
+        const images = await Promise.all(uploadPromises);
 
         // Create product
         const product = await Product.create({
@@ -305,6 +308,12 @@ const deleteProduct = catchAsyncErrors(async (req, res, next) => {
 
         if (!product) {
             return next(new ErrorHandler("Product not found", 404));
+        }
+
+        if (Array.isArray(product.images) && product.images.length > 0) {
+            await Promise.all(
+                product.images.map(img => deleteFromCloudinary(img.public_id))
+            );
         }
 
         await Product.findByIdAndDelete(productId);

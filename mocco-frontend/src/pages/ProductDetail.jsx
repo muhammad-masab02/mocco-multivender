@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ProductDetailInfo from "../components/common/products/ProductDetailInfo";
+import { getImageUrl } from "../utils/imageUrl.js";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import ProductCard from "../components/common/products/ProductCard";
 import axios from "axios";
@@ -168,10 +169,14 @@ export const ProductDetail = () => {
     );
   }
 
-  const imageUrl =
-    // currentProduct?.images?.[0]?.url ||
-    // currentProduct?.images?.[0]?.public_id ||
-    "https://dummyimage.com/600x400/e2e8f0/64748b.png&text=No+Image";
+  const mainImg =
+    currentProduct?.images?.[0]?.url ||
+    currentProduct?.image_Url?.[0]?.url ||
+    currentProduct?.images?.[0];
+  const imageUrl = getImageUrl(
+    mainImg,
+    "https://dummyimage.com/600x400/e2e8f0/64748b.png&text=No+Image",
+  );
 
   return (
     <div className="bg-white">
@@ -195,7 +200,10 @@ export const ProductDetail = () => {
                     key={idx}
                     className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 cursor-pointer hover:ring-2 ring-slate-900 transition-all"
                   >
-                    <img src={img.url} className="w-full h-full object-cover" />
+                    <img
+                      src={getImageUrl(img.url || img)}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 ))}
               </div>

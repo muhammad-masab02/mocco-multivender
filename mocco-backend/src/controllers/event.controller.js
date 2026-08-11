@@ -2,6 +2,7 @@ import catchAsyncErrors from "../middlewares/CatchAsyncErrors.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
 import Event from "../models/event.model.js";
 import Shop from "../models/shop.model.js";
+import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
 // create event
 const createEvent = catchAsyncErrors(async (req, res, next) => {
@@ -38,11 +39,13 @@ const createEvent = catchAsyncErrors(async (req, res, next) => {
             });
         }
 
-        // 3. Handle images (multer gives req.files)
-        const images = req.files.map((file) => ({
-            public_id: file.filename,
-            url: file.path,
-        }));
+        // 3. Handle images via Cloudinary
+        if (!req.files || req.files.length === 0) {
+            return next(new ErrorHandler("Please upload at least one image for the event.", 400));
+        }
+
+        const uploadPromises = req.files.map(file => uploadToCloudinary(file, "mocco/events"));
+        const images = await Promise.all(uploadPromises);
 
         // 4. Create event
         const event = await Event.create({
@@ -133,6 +136,12 @@ const deleteEvent = catchAsyncErrors(async (req, res, next) => {
 
         if (!event) {
             return next(new ErrorHandler("Event not found", 404));
+        }
+
+        if (Array.isArray(event.images) && event.images.length > 0) {
+            await Promise.all(
+                event.images.map(img => deleteFromCloudinary(img.public_id))
+            );
         }
 
         await Event.findByIdAndDelete(eventId);

@@ -47,7 +47,7 @@ const NewArrivalProducts = ({ productLoading, newArrivalProducts }) => {
           {/* LARGE ITEM */}
           <div className="relative rounded overflow-hidden">
             <img
-              src={largeItem?.image}
+              src={largeItem?.images[0].url}
               alt={largeItem?.name}
               className="w-full h-96 object-cover"
             />
