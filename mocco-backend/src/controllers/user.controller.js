@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import sendMail from "../utils/sendMail.js";
 import User from "../models/user.model.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
-import sendToken from "../utils/jwtToken.js";
+import sendToken, { getClearCookieOptions } from "../utils/jwtToken.js";
 import { createActivationToken } from "../utils/createToken.js";
 import catchAsyncErrors from "../middlewares/CatchAsyncErrors.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
@@ -183,11 +183,7 @@ const getUser = async (req, res, next) => {
 // log out user 
 const logoutUser = async (req, res, next) => {
   try {
-    res.clearCookie("user_token", {
-      expires: new Date(Date.now()),
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    });
+    res.clearCookie("user_token", getClearCookieOptions());
 
     res.status(200).json({
       success: true,

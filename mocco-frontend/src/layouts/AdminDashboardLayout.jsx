@@ -20,7 +20,7 @@ const AdminDashboardLayout = () => {
 
   const handleLogout = async () => {
     try {
-      const { data } = await axios.get(`${backendUrl}/api/v1/user/logout`, {
+      const { data } = await axios.get(`${backendUrl}/user/logout`, {
         withCredentials: true,
       });
       if (data?.success) {

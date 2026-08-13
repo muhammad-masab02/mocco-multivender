@@ -24,6 +24,7 @@ const userSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
       state.isUserAuthenticated = false;
+      state.user = null;
     },
     // Update Profile Reducers
     updateProfileRequest: (state) => {

@@ -5,7 +5,7 @@ import Event from "../models/event.model.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
 import { createActivationToken } from "../utils/createToken.js";
 import sendMail from "../utils/sendMail.js";
-import sendToken from "../utils/jwtToken.js";
+import sendToken, { getClearCookieOptions } from "../utils/jwtToken.js";
 import jwt from "jsonwebtoken";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
@@ -234,11 +234,7 @@ const getShopInfo = async (req, res, next) => {
 // log out shop 
 const logoutShop = async (req, res, next) => {
     try {
-        res.clearCookie("seller_token", {
-            expires: new Date(Date.now()),
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-        });
+        res.clearCookie("seller_token", getClearCookieOptions());
 
         res.status(200).json({
             success: true,

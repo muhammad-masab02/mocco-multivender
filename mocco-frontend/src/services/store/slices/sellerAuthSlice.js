@@ -31,6 +31,7 @@ const sellerSlice = createSlice({
             state.isLoading = false;
             state.error = action.payload;
             state.isSellerAuthenticated = false;
+            state.seller = null;
         },
         // Update seller info
         updateSellerRequest: (state) => {
