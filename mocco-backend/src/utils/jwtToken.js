@@ -22,6 +22,7 @@ export const getClearCookieOptions = () => {
   const isProduction = getIsProduction();
   return {
     expires: new Date(0),
+    maxAge: 0,
     httpOnly: true,
     sameSite: isProduction ? "none" : "lax",
     secure: isProduction,

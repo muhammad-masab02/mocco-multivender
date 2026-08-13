@@ -20,7 +20,7 @@ shopRouter.post("/activate", activateShopEmail);
 shopRouter.post("/login", loginShop);
 shopRouter.get("/seller", isSellerAuthenticated, getSeller);
 shopRouter.get("/info/:shopId", getShopInfo);
-shopRouter.get("/logout", isSellerAuthenticated, logoutShop);
+shopRouter.get("/logout", logoutShop);
 shopRouter.put(
   "/update-seller-info",
   isSellerAuthenticated,

@@ -20,7 +20,7 @@ userRouter.post("/register", upload.single("file"), registerUser);
 userRouter.post("/activate", activateUserEmail);
 userRouter.post("/login", loginUser);
 userRouter.get("/", isUserAuthenticated, getUser);
-userRouter.get("/logout", isUserAuthenticated, logoutUser);
+userRouter.get("/logout", logoutUser);
 
 // Profile routes
 userRouter.put("/update-profile", isUserAuthenticated, upload.single("file"), updateProfile);
