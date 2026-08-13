@@ -35,8 +35,8 @@ import ShopLogin from "./pages/ShopLogin.jsx";
 import ShopCreate from "./pages/ShopCreate.jsx";
 import EmailActivation from "./pages/EmailActivation.jsx";
 import NotFound from "./pages/NotFound.jsx";
-import AdminPanel from "./pages/AdminPanel.jsx";
-import AdminLayout from "./layouts/AdminLayout.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import AdminDashboardLayout from "./layouts/AdminDashboardLayout.jsx";
 import Home from "./pages/Home.jsx";
 import Contact from "./pages/Contact.jsx";
 import ShopDashboard from "./pages/ShopDashboard.jsx";
@@ -266,13 +266,13 @@ function App() {
         <Route
           path="/admin"
           element={
-            // <AdminProtectedRoute>
-            <AdminLayout>
-              <AdminPanel />
-            </AdminLayout>
-            // </AdminProtectedRoute>
+            <AdminProtectedRoute>
+              <AdminDashboardLayout />
+            </AdminProtectedRoute>
           }
-        />
+        >
+          <Route index element={<AdminDashboard />} />
+        </Route>
 
         <Route
           path="/shop-dashboard"

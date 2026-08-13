@@ -9,6 +9,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import PlaceIcon from "@mui/icons-material/Place";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import LogoutIcon from "@mui/icons-material/Logout";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ProfileSidebar from "../components/profile/ProfileSidebar";
 import ProfileTab from "../components/profile/ProfileTab";
 import OrdersTab from "../components/profile/OrdersTab";
@@ -101,9 +102,23 @@ const MyProfile = () => {
   const { tab: routeTab } = useParams();
   const { user, isLoading: isUserLoading } = useSelector((state) => state.user);
 
+  const computedTabs = useMemo(() => {
+    if (user?.role === "admin") {
+      return [
+        {
+          id: "admin-dashboard",
+          label: "Admin Dashboard",
+          icon: AdminPanelSettingsIcon,
+        },
+        ...tabs,
+      ];
+    }
+    return tabs;
+  }, [user?.role]);
+
   const queryTab = new URLSearchParams(location.search).get("tab");
   const resolvedTab = routeTab || queryTab;
-  const activeTab = tabs.some((tab) => tab.id === resolvedTab)
+  const activeTab = computedTabs.some((tab) => tab.id === resolvedTab)
     ? resolvedTab
     : "profile";
 
@@ -164,6 +179,10 @@ const MyProfile = () => {
   }, [queryOrderId]);
 
   const handleTabChange = (tabId) => {
+    if (tabId === "admin-dashboard") {
+      navigate("/admin");
+      return;
+    }
     navigate(
       tabId === "profile" ? "/my-profile" : `/my-profile/?tab=${tabId}`,
       {
@@ -508,7 +527,7 @@ const MyProfile = () => {
           userName={derivedProfile.name}
           userEmail={derivedProfile.email}
           avatarPreview={avatarPreview}
-          tabs={tabs}
+          tabs={computedTabs}
           activeTab={activeTab}
           onTabChange={handleTabChange}
         />
