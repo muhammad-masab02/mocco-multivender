@@ -210,6 +210,24 @@ const deleteProduct = (productId) => async (dispatch) => {
     }
 };
 
+// Add or update review for product or event
+const addProductReview = (reviewData) => async (dispatch) => {
+    try {
+        const { data } = await axios.put(
+            `${backendUrl}/product/add-review`,
+            reviewData,
+            { withCredentials: true }
+        );
+        return data;
+    } catch (error) {
+        const message =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to submit review";
+        throw new Error(message);
+    }
+};
+
 export {
     createProduct,
     updateProduct,
@@ -219,4 +237,5 @@ export {
     getBestSellingProducts,
     toggleFeatured,
     deleteProduct,
+    addProductReview,
 };

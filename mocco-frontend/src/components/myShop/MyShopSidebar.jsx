@@ -12,6 +12,7 @@ import {
   Package,
   PencilLine,
   Phone,
+  Star,
 } from "lucide-react";
 import { formatJoinedDate, toTitle } from "./utils";
 import { createConversation } from "../../services/store/actions/conversation";
@@ -119,6 +120,11 @@ const MyShopSidebar = ({
         {isOwner && (
           <InfoRow icon={Hash} label="Zip Code" value={displayShop.zipCode} />
         )}
+        <InfoRow
+          icon={Star}
+          label="Shop Rating"
+          value={displayShop.ratings ? `${Number(displayShop.ratings).toFixed(1)} / 5.0 ★` : "No ratings yet"}
+        />
         <InfoRow
           icon={Package}
           label="Total Products"

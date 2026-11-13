@@ -18,6 +18,7 @@ import { createConversation } from "../services/store/actions/conversation";
 import { backendUrl } from "../components/myShop/utils";
 import axios from "axios";
 import toast from "react-hot-toast";
+import WriteReviewModal from "../components/common/WriteReviewModal";
 
 // ─── Status configuration ─────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -126,9 +127,15 @@ const UserOrderDetailPage = () => {
   const { user } = useSelector((state) => state.user);
   const { seller: currentSeller } = useSelector((state) => state.seller);
 
-  // UI-only action handlers
-  const handleReviewClick = (productName) => {
-    toast.success(`Review feature for "${productName}" coming soon!`);
+  const [reviewingItem, setReviewingItem] = useState(null);
+
+  // Review action handler
+  const handleReviewClick = (item) => {
+    if (order?.status !== "Delivered") {
+      toast.error("Reviews can only be written for delivered orders!");
+      return;
+    }
+    setReviewingItem(item);
   };
 
   const handleSendMessageClick = async () => {
@@ -286,9 +293,9 @@ const UserOrderDetailPage = () => {
                           <span className="text-xs text-gray-400">
                             Qty: {item.quantity}
                           </span>
-                          {/* Write Review button (UI only) */}
+                          {/* Write Review button */}
                           <button
-                            onClick={() => handleReviewClick(name)}
+                            onClick={() => handleReviewClick(item)}
                             className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium hover:text-amber-700 transition cursor-pointer"
                           >
                             <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
@@ -506,6 +513,18 @@ const UserOrderDetailPage = () => {
             </section>
           </div>
         </div>
+
+        {reviewingItem && (
+          <WriteReviewModal
+            isOpen={!!reviewingItem}
+            item={reviewingItem}
+            orderId={order._id}
+            onClose={() => setReviewingItem(null)}
+            onSuccess={() => {
+              dispatch(getMyOrders());
+            }}
+          />
+        )}
       </div>
     </div>
   );

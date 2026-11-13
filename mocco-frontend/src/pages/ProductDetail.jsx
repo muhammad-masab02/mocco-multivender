@@ -279,34 +279,72 @@ export const ProductDetail = () => {
               <div className="space-y-6">
                 {currentProduct?.reviews &&
                 currentProduct.reviews.length > 0 ? (
-                  currentProduct.reviews.map((review, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex gap-4"
-                    >
-                      <div className="h-12 w-12 rounded-full bg-slate-200 shrink-0 overflow-hidden flex items-center justify-center text-slate-500 font-bold">
-                        {review?.user?.name?.[0] || "U"}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-slate-800">
-                            {review?.user?.name || "Anonymous"}
-                          </h4>
-                          <span className="text-amber-500 text-sm font-medium ml-2">
-                            ★ {review?.rating?.toFixed(1)}
-                          </span>
+                  currentProduct.reviews.map((review, idx) => {
+                    const avatarUrl = review?.user?.avatar?.url || review?.user?.avatar;
+                    const userName = review?.user?.name || "Verified Buyer";
+                    const formattedDate = review?.createdAt
+                      ? new Date(review.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "Recently";
+
+                    return (
+                      <div
+                        key={idx}
+                        className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex gap-4"
+                      >
+                        <div className="h-12 w-12 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center text-slate-600 font-bold">
+                          {avatarUrl ? (
+                            <img
+                              src={avatarUrl}
+                              alt={userName}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            userName[0]?.toUpperCase() || "U"
+                          )}
                         </div>
-                        <p className="text-slate-600 text-sm leading-relaxed">
-                          {review?.comment || "No comment."}
-                        </p>
+                        <div className="flex-1">
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                            <h4 className="font-semibold text-slate-800 text-sm sm:text-base">
+                              {userName}
+                            </h4>
+                            <span className="text-xs text-slate-400">
+                              {formattedDate}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <div className="flex items-center text-amber-400">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <span
+                                  key={s}
+                                  className={
+                                    s <= Math.round(review?.rating || 5)
+                                      ? "text-amber-400"
+                                      : "text-slate-200"
+                                  }
+                                >
+                                  ★
+                                </span>
+                              ))}
+                            </div>
+                            <span className="text-xs font-semibold text-slate-600 ml-1">
+                              {Number(review?.rating || 0).toFixed(1)}
+                            </span>
+                          </div>
+                          <p className="text-slate-600 text-sm leading-relaxed">
+                            {review?.comment || "No comment provided."}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
-                  <div className="text-center py-12 text-slate-500">
-                    <p>
-                      No reviews yet for this product. Be the first to buy and
-                      share your experience!
+                  <div className="text-center py-12 text-slate-500 bg-white rounded-2xl border border-slate-200 p-8">
+                    <p className="text-sm">
+                      No reviews yet for this product. Be the first to buy and share your experience!
                     </p>
                   </div>
                 )}

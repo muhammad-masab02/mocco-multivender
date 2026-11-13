@@ -36,18 +36,19 @@ const MyShop = () => {
     }
   }, [dispatch, sellerId]);
 
-  // Load shop profile
+  const [shopReviews, setShopReviews] = useState([]);
+
+  // Load shop profile and aggregated reviews from API
   useEffect(() => {
     const fetchShopInfo = async () => {
       try {
         setIsShopLoading(true);
-        if (isOwner) {
-          setShopView(initialFormState(seller));
-        } else {
-          const { data } = await axios.get(
-            `${backendUrl}/shop/info/${sellerId}`,
-          );
-          setShopView(initialFormState(data?.shop));
+        const { data } = await axios.get(`${backendUrl}/shop/info/${sellerId}`);
+        if (data?.shop) {
+          setShopView(initialFormState(data.shop));
+        }
+        if (Array.isArray(data?.reviews)) {
+          setShopReviews(data.reviews);
         }
       } catch (error) {
         console.error("Failed to fetch shop details", error);
@@ -65,17 +66,22 @@ const MyShop = () => {
   const eventItems = Array.isArray(storeEvents) ? storeEvents : [];
 
   const reviewItems = useMemo(() => {
+    if (shopReviews.length > 0) return shopReviews;
+
+    // Fallback: local extraction if needed
     return sellerProducts.flatMap((product) => {
       const reviews = Array.isArray(product?.reviews) ? product.reviews : [];
-
       return reviews.map((review, index) => ({
-        id: `${product?._id || index}-review-${index}`,
-        productName: product?.name || "Product",
+        _id: `${product?._id || index}-review-${index}`,
+        itemName: product?.name || "Product",
+        itemType: "product",
         comment: review?.comment || "No comment",
         rating: Number(review?.rating || 0),
+        user: review?.user,
+        createdAt: review?.createdAt,
       }));
     });
-  }, [sellerProducts]);
+  }, [shopReviews, sellerProducts]);
 
   const totalProducts = sellerProducts.length;
   const totalEvents = eventItems.length;
@@ -176,32 +182,99 @@ const MyShop = () => {
               <>
                 {reviewItems.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    {reviewItems.map((review) => (
-                      <article
-                        key={review.id}
-                        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_28px_rgba(15,23,42,0.06)]"
-                      >
-                        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-                          {review.productName}
-                        </p>
-                        <h3 className="mt-3 text-lg font-semibold text-slate-800">
-                          {review.comment}
-                        </h3>
-                        <div className="mt-3 flex items-center gap-2 text-amber-500">
-                          <p className="text-sm">
-                            {"★".repeat(Math.max(1, Math.round(review.rating)))}
-                          </p>
-                          <span className="text-xs font-semibold text-slate-500">
-                            {review.rating.toFixed(1)} rating
-                          </span>
-                        </div>
-                      </article>
-                    ))}
+                    {reviewItems.map((review, i) => {
+                      const userName = review?.user?.name || "Verified Buyer";
+                      const userAvatar = review?.user?.avatar?.url || review?.user?.avatar;
+                      const formattedDate = review?.createdAt
+                        ? new Date(review.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : "Recently";
+
+                      return (
+                        <article
+                          key={review._id || review.id || i}
+                          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_28px_rgba(15,23,42,0.06)] flex flex-col justify-between gap-4"
+                        >
+                          <div>
+                            {/* Product/Event info badge */}
+                            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {review.itemImage && (
+                                  <img
+                                    src={review.itemImage}
+                                    alt={review.itemName}
+                                    className="h-8 w-8 rounded-lg object-cover border border-slate-200 shrink-0"
+                                  />
+                                )}
+                                <div className="min-w-0">
+                                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 mr-1.5">
+                                    {review.itemType === "event" ? "Event" : "Product"}
+                                  </span>
+                                  <span className="text-xs font-medium text-slate-700 truncate inline-block max-w-[180px] sm:max-w-xs align-bottom">
+                                    {review.itemName || review.productName}
+                                  </span>
+                                </div>
+                              </div>
+                              <span className="text-[11px] text-slate-400 shrink-0">
+                                {formattedDate}
+                              </span>
+                            </div>
+
+                            {/* Rating and Comment */}
+                            <div className="mt-3 flex items-center gap-1.5">
+                              <div className="flex text-amber-400 text-sm">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <span
+                                    key={s}
+                                    className={
+                                      s <= Math.round(review.rating || 5)
+                                        ? "text-amber-400"
+                                        : "text-slate-200"
+                                    }
+                                  >
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
+                              <span className="text-xs font-semibold text-slate-600 ml-1">
+                                {Number(review.rating || 0).toFixed(1)}
+                              </span>
+                            </div>
+
+                            <p className="mt-2.5 text-sm text-slate-700 leading-relaxed">
+                              {review.comment}
+                            </p>
+                          </div>
+
+                          {/* Reviewer User info */}
+                          <div className="flex items-center gap-2.5 pt-3 border-t border-slate-100">
+                            <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center text-xs font-bold text-slate-600">
+                              {userAvatar ? (
+                                <img
+                                  src={userAvatar}
+                                  alt={userName}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                userName[0]?.toUpperCase() || "U"
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-slate-800">{userName}</p>
+                              <p className="text-[10px] text-slate-400">Verified Buyer</p>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
                   </div>
                 ) : (
                   <ShopEmptyState
-                    title="No content available"
-                    subtitle="No reviews received yet"
+                    title="No reviews yet"
+                    subtitle="This shop hasn't received any reviews yet."
                   />
                 )}
               </>

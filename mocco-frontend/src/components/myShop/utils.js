@@ -34,6 +34,7 @@ export const initialFormState = (shop) => ({
     phoneNumber: shop?.phoneNumber || "",
     zipCode: String(shop?.zipCode || ""),
     description: shop?.description || "",
+    ratings: Number(shop?.ratings || 0),
     avatarUrl: resolveImageUrl(shop?.avatar?.url),
     createdAt: shop?.createdAt || "",
     updatedAt: shop?.updatedAt || "",

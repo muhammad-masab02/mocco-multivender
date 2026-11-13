@@ -59,6 +59,7 @@ const productSchema = new Schema(
                 user: { type: Schema.Types.ObjectId, ref: "User" },
                 rating: { type: Number, required: true },
                 comment: { type: String },
+                orderId: { type: Schema.Types.ObjectId, ref: "Order" },
                 createdAt: { type: Date, default: Date.now },
             },
         ],

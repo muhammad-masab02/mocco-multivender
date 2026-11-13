@@ -58,6 +58,19 @@ const eventSchema = new Schema(
             type: Number,
             default: 0,
         },
+        rating: {
+            type: Number,
+            default: 0,
+        },
+        reviews: [
+            {
+                user: { type: Schema.Types.ObjectId, ref: "User" },
+                rating: { type: Number, required: true },
+                comment: { type: String },
+                orderId: { type: Schema.Types.ObjectId, ref: "Order" },
+                createdAt: { type: Date, default: Date.now },
+            },
+        ],
         shop: {
             type: Schema.Types.ObjectId,
             ref: "Shop",

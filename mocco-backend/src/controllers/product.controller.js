@@ -3,6 +3,7 @@ import ErrorHandler from "../utils/ErrorHandler.js";
 import Product from "../models/product.model.js";
 import Event from "../models/event.model.js";
 import Shop from "../models/shop.model.js";
+import Order from "../models/order.model.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
 // get all products across shops (for storefront/home pages)
@@ -232,10 +233,14 @@ const getProductById = catchAsyncErrors(async (req, res, next) => {
     try {
         const { id } = req.params;
 
-        let product = await Product.findById(id).populate("shop", "name avatar description createdAt");
+        let product = await Product.findById(id)
+            .populate("shop", "name avatar description createdAt")
+            .populate("reviews.user", "name avatar");
 
         if (!product) {
-            product = await Event.findById(id).populate("shop", "name avatar description createdAt");
+            product = await Event.findById(id)
+                .populate("shop", "name avatar description createdAt")
+                .populate("reviews.user", "name avatar");
         }
 
         if (!product) {
@@ -420,4 +425,134 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
     }
 });
 
-export { createProduct, updateProduct, getAllProducts, getFeaturedProducts, getBestSellingProducts, getProductById, toggleFeatured, getShopProducts, deleteProduct, searchProducts };
+// add or update review for product or event (user only)
+const addReview = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { rating, comment, productId, orderId } = req.body;
+        const userId = req.user._id;
+
+        if (!rating || !productId) {
+            return next(new ErrorHandler("Rating and product ID are required!", 400));
+        }
+
+        const numericRating = Number(rating);
+        if (Number.isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
+            return next(new ErrorHandler("Rating must be a number between 1 and 5!", 400));
+        }
+
+        // Verify order exists, belongs to user, and contains this product/event
+        if (orderId) {
+            const order = await Order.findById(orderId);
+            if (!order) {
+                return next(new ErrorHandler("Order not found!", 404));
+            }
+            if (order.user.toString() !== userId.toString()) {
+                return next(new ErrorHandler("You are not authorized to review this order!", 403));
+            }
+            const hasItem = order.items.some(
+                (item) => item.productId.toString() === productId.toString()
+            );
+            if (!hasItem) {
+                return next(new ErrorHandler("This item was not part of the specified order!", 400));
+            }
+        } else {
+            // Check if user has ANY delivered order with this product
+            const hasPurchased = await Order.findOne({
+                user: userId,
+                "items.productId": productId,
+                status: "Delivered",
+            });
+            if (!hasPurchased) {
+                return next(new ErrorHandler("You can only review products from delivered orders!", 400));
+            }
+        }
+
+        // Try to find as Product, then as Event
+        let item = await Product.findById(productId);
+        let itemType = "product";
+        if (!item) {
+            item = await Event.findById(productId);
+            itemType = "event";
+        }
+
+        if (!item) {
+            return next(new ErrorHandler("Product or Event not found!", 404));
+        }
+
+        // Check if user has already reviewed this item
+        const existingReviewIndex = item.reviews.findIndex(
+            (r) => r.user.toString() === userId.toString()
+        );
+
+        if (existingReviewIndex !== -1) {
+            // Update existing review
+            item.reviews[existingReviewIndex].rating = numericRating;
+            item.reviews[existingReviewIndex].comment = comment || "";
+            if (orderId) item.reviews[existingReviewIndex].orderId = orderId;
+            item.reviews[existingReviewIndex].createdAt = Date.now();
+        } else {
+            // Add new review
+            item.reviews.push({
+                user: userId,
+                rating: numericRating,
+                comment: comment || "",
+                orderId: orderId || null,
+                createdAt: Date.now(),
+            });
+        }
+
+        // Recalculate product average rating
+        const totalRating = item.reviews.reduce((acc, r) => acc + Number(r.rating || 0), 0);
+        item.rating = item.reviews.length > 0 ? Number((totalRating / item.reviews.length).toFixed(1)) : 0;
+
+        await item.save();
+
+        // Recalculate overall Shop rating from all products + events belonging to this shop
+        const shopId = item.shop;
+        if (shopId) {
+            const [shopProducts, shopEvents] = await Promise.all([
+                Product.find({ shop: shopId }, "reviews"),
+                Event.find({ shop: shopId }, "reviews"),
+            ]);
+
+            const allShopReviews = [
+                ...shopProducts.flatMap((p) => p.reviews || []),
+                ...shopEvents.flatMap((e) => e.reviews || []),
+            ];
+
+            const shopTotalRating = allShopReviews.reduce((acc, r) => acc + Number(r.rating || 0), 0);
+            const shopAvgRating = allShopReviews.length > 0
+                ? Number((shopTotalRating / allShopReviews.length).toFixed(1))
+                : 0;
+
+            await Shop.findByIdAndUpdate(shopId, { ratings: shopAvgRating });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: existingReviewIndex !== -1 ? "Review updated successfully!" : "Review added successfully!",
+            itemType,
+            rating: item.rating,
+            reviewsCount: item.reviews.length,
+        });
+    } catch (error) {
+        console.error("Error in addReview:", error);
+        return next(
+            new ErrorHandler("Failed to submit review! " + error.message, 500),
+        );
+    }
+});
+
+export {
+    createProduct,
+    updateProduct,
+    getAllProducts,
+    getFeaturedProducts,
+    getBestSellingProducts,
+    getProductById,
+    toggleFeatured,
+    getShopProducts,
+    deleteProduct,
+    searchProducts,
+    addReview,
+};

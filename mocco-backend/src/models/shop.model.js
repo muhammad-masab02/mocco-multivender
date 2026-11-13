@@ -47,6 +47,14 @@ const shopSchema = new Schema(
             type: Number,
             required: [true, "Please enter your shop zip code!"],
         },
+        ratings: {
+            type: Number,
+            default: 0,
+        },
+        availableBalance: {
+            type: Number,
+            default: 0,
+        },
         resetPasswordToken: String,
         resetPasswordTime: Date,
     },

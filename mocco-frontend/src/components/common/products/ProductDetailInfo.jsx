@@ -5,7 +5,8 @@ import { CircularProgress } from "@mui/material";
 
 const ProductDetailInfo = ({
   name,
-  reviews,
+  rating = 0,
+  reviews = [],
   description,
   price,
   discount_price,
@@ -21,6 +22,9 @@ const ProductDetailInfo = ({
   onAddToCart,
   onBuyNow,
 }) => {
+  const reviewsCount = Array.isArray(reviews) ? reviews.length : 0;
+  const displayRating = Number(rating || 0).toFixed(1);
+
   return (
     <div className="w-full lg:w1/2 space-y-6 flex flex-col justify-center">
       {/* Title & Rating */}
@@ -31,10 +35,10 @@ const ProductDetailInfo = ({
         <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5 text-amber-500 bg-amber-50 px-2.5 py-1 rounded-full">
             <Star size={16} fill="currentColor" />
-            <span className="font-semibold text-amber-600">4.5</span>
+            <span className="font-semibold text-amber-600">{displayRating}</span>
             <span className="text-amber-600/80 ml-1">
-              ({reviews?.length || 1})
-              <span className="hidden sm:inline">Reviews</span>
+              ({reviewsCount})
+              <span className="hidden sm:inline"> {reviewsCount === 1 ? "Review" : "Reviews"}</span>
             </span>
           </div>
           <span className="h-4 w-px bg-slate-300" />

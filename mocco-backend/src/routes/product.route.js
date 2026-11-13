@@ -10,8 +10,10 @@ import {
     getShopProducts,
     toggleFeatured,
     searchProducts,
+    addReview,
 } from "../controllers/product.controller.js";
 import isSellerAuthenticated from "../middlewares/sellerAuth.js";
+import isUserAuthenticated from "../middlewares/userAuth.js";
 import upload from "../../multer.js";
 
 const productRouter = express.Router();
@@ -37,6 +39,7 @@ productRouter.put(
     upload.array("files", 10),
     updateProduct,
 );
+productRouter.put("/add-review", isUserAuthenticated, addReview);
 productRouter.delete("/delete/:id", isSellerAuthenticated, deleteProduct);
 
 export default productRouter;

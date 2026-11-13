@@ -206,7 +206,7 @@ const getSeller = async (req, res, next) => {
     }
 };
 
-// get public shop info
+// get public shop info with aggregated reviews from products & events
 const getShopInfo = async (req, res, next) => {
     try {
         const { shopId } = req.params;
@@ -216,9 +216,54 @@ const getShopInfo = async (req, res, next) => {
             return next(new ErrorHandler("Shop not found!", 404));
         }
 
+        // Fetch all products and events for this shop with reviews populated
+        const [products, events] = await Promise.all([
+            Product.find({ shop: shopId }, "name images reviews")
+                .populate("reviews.user", "name avatar"),
+            Event.find({ shop: shopId }, "name images reviews")
+                .populate("reviews.user", "name avatar"),
+        ]);
+
+        const allReviews = [];
+        products.forEach((p) => {
+            (p.reviews || []).forEach((r) => {
+                allReviews.push({
+                    _id: r._id,
+                    rating: r.rating,
+                    comment: r.comment,
+                    createdAt: r.createdAt,
+                    user: r.user,
+                    itemType: "product",
+                    itemId: p._id,
+                    itemName: p.name,
+                    itemImage: p.images?.[0]?.url || null,
+                });
+            });
+        });
+
+        events.forEach((e) => {
+            (e.reviews || []).forEach((r) => {
+                allReviews.push({
+                    _id: r._id,
+                    rating: r.rating,
+                    comment: r.comment,
+                    createdAt: r.createdAt,
+                    user: r.user,
+                    itemType: "event",
+                    itemId: e._id,
+                    itemName: e.name,
+                    itemImage: e.images?.[0]?.url || null,
+                });
+            });
+        });
+
+        // Sort reviews by latest first
+        allReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
         res.status(200).json({
             success: true,
             shop,
+            reviews: allReviews,
         });
     } catch (error) {
         console.error("Error in getShopInfo:", error);
