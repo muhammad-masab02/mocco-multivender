@@ -45,21 +45,47 @@ const getFeaturedProducts = catchAsyncErrors(async (req, res, next) => {
 
 // get best-selling products:
 // criteria — sorted by total_sell desc + rating desc; minimum 1 sale
+// fallback — if fewer than MIN_SOLD_FOR_SECTION products have sales, fill up
+//            with top-rated/newest products so the home section is never empty
+const MIN_SOLD_FOR_SECTION = 1; // minimum products with actual sales needed to skip fallback
+
 const getBestSellingProducts = catchAsyncErrors(async (req, res, next) => {
     try {
-        const limit = parseInt(req.query.limit) || 0; // 0 = no limit (all)
+        const limit = parseInt(req.query.limit) || 8;
 
-        let query = Product.find({ total_sell: { $gt: 0 } })
+        // ── Step 1: products with actual sales ───────────────────────────────
+        const soldProducts = await Product.find({ total_sell: { $gt: 0 } })
             .populate("shop", "name avatar")
-            .sort({ total_sell: -1, rating: -1 });
+            .sort({ total_sell: -1, rating: -1 })
+            .limit(limit);
 
-        if (limit > 0) query = query.limit(limit);
+        // ── Step 2: if we have enough sold products, return them directly ────
+        if (soldProducts.length >= MIN_SOLD_FOR_SECTION) {
+            return res.status(200).json({
+                success: true,
+                products: soldProducts,
+                source: "sold", // helpful for debugging
+            });
+        }
 
-        const products = await query;
+        // ── Step 3: fallback — fill remaining slots with top-rated/newest ───
+        const soldIds = soldProducts.map((p) => p._id);
+        const remaining = limit - soldProducts.length;
+
+        const fallbackProducts = await Product.find({
+            _id: { $nin: soldIds },   // exclude already-fetched sold products
+            stock: { $gt: 0 },        // only in-stock products
+        })
+            .populate("shop", "name avatar")
+            .sort({ rating: -1, total_sell: -1, createdAt: -1 })
+            .limit(remaining);
+
+        const products = [...soldProducts, ...fallbackProducts];
 
         return res.status(200).json({
             success: true,
             products,
+            source: soldProducts.length === 0 ? "fallback" : "mixed",
         });
     } catch (error) {
         console.error("Error in getBestSellingProducts:", error);
@@ -84,7 +110,6 @@ const createProduct = catchAsyncErrors(async (req, res, next) => {
             price,
             discount_price,
             total_sell,
-            sold_out,
             isFeatured,
         } = req.body;
 
@@ -119,8 +144,7 @@ const createProduct = catchAsyncErrors(async (req, res, next) => {
             price,
             discount_price,
             images,
-            total_sell,
-            sold_out,
+            total_sell: Number(total_sell) || 0,
             isFeatured: isFeatured === "true" || isFeatured === true,
             shop: shop._id,
         });
@@ -330,4 +354,70 @@ const deleteProduct = catchAsyncErrors(async (req, res, next) => {
     }
 });
 
-export { createProduct, getAllProducts, getFeaturedProducts, getBestSellingProducts, getProductById, toggleFeatured, getShopProducts, deleteProduct, searchProducts };
+// update product by id (seller only)
+const updateProduct = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const productId = req.params.id;
+        const sellerId = req.seller._id;
+
+        const product = await Product.findById(productId);
+
+        if (!product) {
+            return next(new ErrorHandler("Product not found", 404));
+        }
+
+        // Verify product belongs to seller shop
+        if (product.shop.toString() !== sellerId.toString()) {
+            return next(new ErrorHandler("Not authorized to update this product", 403));
+        }
+
+        const {
+            name,
+            description,
+            category,
+            tags,
+            stock,
+            price,
+            discount_price,
+            isFeatured,
+        } = req.body;
+
+        if (name) product.name = name;
+        if (description) product.description = description;
+        if (category) product.category = category;
+        if (tags) product.tags = typeof tags === "string" ? tags.split(",").map(t => t.trim()) : tags;
+        if (stock !== undefined && stock !== null) product.stock = Number(stock);
+        if (price !== undefined && price !== null) product.price = Number(price);
+        if (discount_price !== undefined && discount_price !== null) product.discount_price = Number(discount_price);
+        if (isFeatured !== undefined) {
+            product.isFeatured = isFeatured === "true" || isFeatured === true;
+        }
+
+        // Handle replacement/additional images if uploaded
+        if (req.files && req.files.length > 0) {
+            // Delete old images from Cloudinary
+            if (Array.isArray(product.images) && product.images.length > 0) {
+                await Promise.allSettled(
+                    product.images.map(img => deleteFromCloudinary(img.public_id))
+                );
+            }
+            const uploadPromises = req.files.map(file => uploadToCloudinary(file, "mocco/products"));
+            product.images = await Promise.all(uploadPromises);
+        }
+
+        await product.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Product updated successfully",
+            product,
+        });
+    } catch (error) {
+        console.error("Error in updateProduct:", error);
+        return next(
+            new ErrorHandler("Failed to update product! " + error.message, 500),
+        );
+    }
+});
+
+export { createProduct, updateProduct, getAllProducts, getFeaturedProducts, getBestSellingProducts, getProductById, toggleFeatured, getShopProducts, deleteProduct, searchProducts };

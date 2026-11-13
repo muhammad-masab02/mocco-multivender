@@ -23,6 +23,23 @@ const eventSlice = createSlice({
             state.isLoading = false;
             state.error = action.payload;
         },
+        // update event
+        updateEventRequest: (state) => {
+            state.isLoading = true;
+        },
+        updateEventSuccess: (state, action) => {
+            state.isLoading = false;
+            const updated = action.payload;
+            const index = state.events.findIndex((e) => e._id === updated._id || e.id === updated._id);
+            if (index !== -1) {
+                state.events[index] = updated;
+            }
+            state.error = null;
+        },
+        updateEventFail: (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload;
+        },
         // get all events
         getEventsRequest: (state) => {
             state.isLoading = true;
@@ -62,6 +79,9 @@ export const {
     createEventRequest,
     createEventSuccess,
     createEventFail,
+    updateEventRequest,
+    updateEventSuccess,
+    updateEventFail,
     getEventsRequest,
     getEventsSuccess,
     getEventsFail,

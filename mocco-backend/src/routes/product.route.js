@@ -1,6 +1,7 @@
 import express from "express";
 import {
     createProduct,
+    updateProduct,
     deleteProduct,
     getAllProducts,
     getFeaturedProducts,
@@ -30,6 +31,12 @@ productRouter.get("/detail/:id", getProductById);
 productRouter.get("/all/:shopId", getShopProducts);
 
 productRouter.patch("/toggle-featured/:id", isSellerAuthenticated, toggleFeatured);
+productRouter.put(
+    "/update/:id",
+    isSellerAuthenticated,
+    upload.array("files", 10),
+    updateProduct,
+);
 productRouter.delete("/delete/:id", isSellerAuthenticated, deleteProduct);
 
 export default productRouter;

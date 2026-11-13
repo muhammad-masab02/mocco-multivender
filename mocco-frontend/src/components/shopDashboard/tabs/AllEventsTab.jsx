@@ -1,10 +1,11 @@
+import { useState, useEffect } from "react";
 import TableShell from "../shared/TableShell";
-import TableActionIcon from "../shared/TableActionIcon";
+import TableActionMenu from "../shared/TableActionMenu";
 import TruncateTextCell from "../shared/TruncateTextCell";
+import EditProductOrEventModal from "../modals/EditProductOrEventModal";
 import { deleteEvent, getEvents } from "../../../services/store/actions/event";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 
 const AllEventsTab = () => {
   const navigate = useNavigate();
@@ -19,58 +20,89 @@ const AllEventsTab = () => {
     error: eventError,
   } = useSelector((state) => state.event);
 
+  const [editingEvent, setEditingEvent] = useState(null);
+
   useEffect(() => {
-    dispatch(getEvents(shopId));
+    if (shopId) {
+      dispatch(getEvents(shopId));
+    }
   }, [dispatch, shopId]);
 
-  // implement route to product detail page
   const handlePreviewRoute = (productId) => {
     if (!productId) return;
     navigate(`/product-detail/${productId}`);
   };
 
-  // implement delete product functionality
   const handleDeleteEvent = async (eventId) => {
     if (!eventId) return;
-    await dispatch(deleteEvent(eventId));
-    // Optionally, you can show a success message or handle errors here
-    alert("Event deleted successfully!" + eventId);
+    const shouldDelete = window.confirm("Are you sure you want to delete this event?");
+    if (!shouldDelete) return;
+    try {
+      await dispatch(deleteEvent(eventId));
+    } catch (err) {
+      window.alert(err?.message || "Failed to delete event");
+    }
   };
 
   const rows =
     events?.length > 0
-      ? events?.map((item, i) => [
-          <TruncateTextCell
-            key={`event-id-${i}`}
-            text={item?._id || i}
-            maxWidthClass="max-w-36"
-            mono
-          />,
-          <TruncateTextCell
-            key={`event-name-${i}`}
-            text={item?.name || "Unnamed Event"}
-            maxWidthClass="max-w-48"
-          />,
-          `US$ ${item?.discount_price ?? item?.price ?? 0}`,
-          item?.stock ?? 0,
-          item?.total_sell ?? 0,
-          item?.status ?? "N/A",
-          item?.startDate ? new Date(item.startDate).toLocaleDateString() : "-",
-          item?.endDate ? new Date(item.endDate).toLocaleDateString() : "-",
-          <TableActionIcon
-            key={`event-preview-${i}`}
-            action={() => handlePreviewRoute(item?._id)}
-            type="preview"
-          />,
-          <TableActionIcon
-            key={`event-delete-${i}`}
-            action={() => handleDeleteEvent(item?._id)}
-            type="delete"
-          />,
-        ])
+      ? events?.map((item, i) => {
+          const eventId = item?._id;
+
+          const actionList = [
+            {
+              label: "Preview",
+              icon: "preview",
+              onClick: () => handlePreviewRoute(eventId),
+            },
+            {
+              label: "Edit",
+              icon: "edit",
+              onClick: () => setEditingEvent(item),
+            },
+            {
+              label: "Delete",
+              icon: "delete",
+              variant: "danger",
+              onClick: () => handleDeleteEvent(eventId),
+            },
+          ];
+
+          return [
+            <TruncateTextCell
+              key={`event-id-${i}`}
+              text={eventId || i}
+              maxWidthClass="max-w-36"
+              mono
+            />,
+            <TruncateTextCell
+              key={`event-name-${i}`}
+              text={item?.name || "Unnamed Event"}
+              maxWidthClass="max-w-48"
+            />,
+            `US$ ${item?.discount_price ?? item?.price ?? 0}`,
+            item?.stock ?? 0,
+            item?.total_sell ?? 0,
+            <span
+              key={`event-status-${i}`}
+              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                item?.status === "Running"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {item?.status || "Running"}
+            </span>,
+            item?.startDate ? new Date(item.startDate).toLocaleDateString() : "-",
+            item?.endDate ? new Date(item.endDate).toLocaleDateString() : "-",
+            <TableActionMenu key={`event-actions-${i}`} actions={actionList} />,
+          ];
+        })
       : [
           [
-            eventError && "No events found for this shop.",
+            eventError || "No events found for this shop.",
+            "-",
+            "-",
             "-",
             "-",
             "-",
@@ -81,23 +113,31 @@ const AllEventsTab = () => {
         ];
 
   return (
-    <TableShell
-      columns={[
-        "Event Id",
-        "Name",
-        "Price",
-        "Stock",
-        "Sold Out",
-        "Status",
-        "Start",
-        "End",
-        "Preview",
-        "Delete",
-        // actions -> preview, delete, edit (optional)
-      ]}
-      rows={rows}
-      eventLoading={isEventLoading}
-    />
+    <>
+      <TableShell
+        columns={[
+          "Event Id",
+          "Name",
+          "Price",
+          "Stock",
+          "Sold",
+          "Status",
+          "Start",
+          "End",
+          "Actions",
+        ]}
+        rows={rows}
+        productLoading={isEventLoading}
+      />
+
+      {editingEvent && (
+        <EditProductOrEventModal
+          item={editingEvent}
+          mode="event"
+          onClose={() => setEditingEvent(null)}
+        />
+      )}
+    </>
   );
 };
 

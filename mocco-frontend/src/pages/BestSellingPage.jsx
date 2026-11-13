@@ -42,7 +42,7 @@ const BestSellingPage = () => {
         </div>
       ) : bestSellingProducts.length > 0 ? (
         <BestSelling
-          productData={bestSellingProducts}
+          products={bestSellingProducts}
           handleClick={handleClick}
           limit={null}
           isFullPage={true}

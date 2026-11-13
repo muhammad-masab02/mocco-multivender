@@ -58,10 +58,6 @@ const eventSchema = new Schema(
             type: Number,
             default: 0,
         },
-        sold_out: {
-            type: Number,
-            default: 0,
-        },
         shop: {
             type: Schema.Types.ObjectId,
             ref: "Shop",

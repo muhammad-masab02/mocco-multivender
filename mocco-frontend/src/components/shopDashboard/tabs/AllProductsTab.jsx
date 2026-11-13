@@ -1,7 +1,8 @@
 import { useState } from "react";
 import TableShell from "../shared/TableShell";
-import TableActionIcon from "../shared/TableActionIcon";
+import TableActionMenu from "../shared/TableActionMenu";
 import TruncateTextCell from "../shared/TruncateTextCell";
+import EditProductOrEventModal from "../modals/EditProductOrEventModal";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import {
@@ -15,6 +16,7 @@ const AllProductsTab = ({ sellerProducts = [], productLoading = false }) => {
 
   // Local optimistic state for isFeatured per product id
   const [featuredState, setFeaturedState] = useState({});
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const handlePreviewRoute = (productId) => {
     if (!productId) return;
@@ -33,7 +35,6 @@ const AllProductsTab = ({ sellerProducts = [], productLoading = false }) => {
   };
 
   const handleToggleFeatured = async (productId, currentIsFeatured) => {
-    // Optimistic update
     setFeaturedState((prev) => ({
       ...prev,
       [productId]: !currentIsFeatured,
@@ -41,7 +42,6 @@ const AllProductsTab = ({ sellerProducts = [], productLoading = false }) => {
     try {
       await dispatch(toggleFeatured(productId));
     } catch (error) {
-      // Revert on failure
       setFeaturedState((prev) => ({
         ...prev,
         [productId]: currentIsFeatured,
@@ -56,11 +56,35 @@ const AllProductsTab = ({ sellerProducts = [], productLoading = false }) => {
     productsToRender.length > 0
       ? productsToRender.map((item, i) => {
           const productId = item?._id;
-          // Resolve current isFeatured: prefer local optimistic state, fall back to data
           const isFeatured =
             productId in featuredState
               ? featuredState[productId]
               : !!item?.isFeatured;
+
+          const actionList = [
+            {
+              label: "Preview",
+              icon: "preview",
+              onClick: () => handlePreviewRoute(productId),
+            },
+            {
+              label: "Edit",
+              icon: "edit",
+              onClick: () => setEditingProduct(item),
+            },
+            {
+              label: isFeatured ? "Unfeature" : "Mark Featured",
+              icon: "feature",
+              active: isFeatured,
+              onClick: () => handleToggleFeatured(productId, isFeatured),
+            },
+            {
+              label: "Delete",
+              icon: "delete",
+              variant: "danger",
+              onClick: () => handleDeleteProduct(productId),
+            },
+          ];
 
           return [
             <TruncateTextCell
@@ -77,23 +101,17 @@ const AllProductsTab = ({ sellerProducts = [], productLoading = false }) => {
             `US$ ${item?.discount_price ?? item?.price ?? 0}`,
             item?.stock ?? 0,
             item?.total_sell ?? 0,
-            /* Featured toggle */
-            <TableActionIcon
-              key={`product-feature-${i}`}
-              type="feature"
-              active={isFeatured}
-              action={() => handleToggleFeatured(productId, isFeatured)}
-            />,
-            <TableActionIcon
-              key={`product-preview-${i}`}
-              type="preview"
-              action={() => handlePreviewRoute(productId)}
-            />,
-            <TableActionIcon
-              key={`product-delete-${i}`}
-              type="delete"
-              action={() => handleDeleteProduct(productId)}
-            />,
+            <span
+              key={`product-status-${i}`}
+              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                isFeatured
+                  ? "bg-amber-100 text-amber-800 border border-amber-200"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {isFeatured ? "Featured" : "Standard"}
+            </span>,
+            <TableActionMenu key={`product-actions-${i}`} actions={actionList} />,
           ];
         })
       : [
@@ -107,25 +125,33 @@ const AllProductsTab = ({ sellerProducts = [], productLoading = false }) => {
             "-",
             "-",
             "-",
-            "-",
           ],
         ];
 
   return (
-    <TableShell
-      columns={[
-        "Product Id",
-        "Name",
-        "Price",
-        "Stock",
-        "Sold Out",
-        "Featured",
-        "Preview",
-        "Delete",
-      ]}
-      rows={rows}
-      productLoading={productLoading}
-    />
+    <>
+      <TableShell
+        columns={[
+          "Product Id",
+          "Name",
+          "Price",
+          "Stock",
+          "Sold",
+          "Status",
+          "Actions",
+        ]}
+        rows={rows}
+        productLoading={productLoading}
+      />
+
+      {editingProduct && (
+        <EditProductOrEventModal
+          item={editingProduct}
+          mode="product"
+          onClose={() => setEditingProduct(null)}
+        />
+      )}
+    </>
   );
 };
 

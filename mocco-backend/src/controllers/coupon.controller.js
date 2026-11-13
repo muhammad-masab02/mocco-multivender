@@ -160,4 +160,68 @@ const validateCoupon = catchAsyncErrors(async (req, res, next) => {
     }
 });
 
-export { createCoupon, getCoupons, deleteCoupon, validateCoupon };
+// update coupon by id (seller only)
+const updateCoupon = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const couponId = req.params.id;
+        const sellerId = req.seller._id;
+
+        const coupon = await Coupon.findById(couponId);
+
+        if (!coupon) {
+            return res.status(404).json({
+                success: false,
+                message: "Coupon not found",
+            });
+        }
+
+        if (coupon.shop.toString() !== sellerId.toString()) {
+            return next(new ErrorHandler("Not authorized to update this coupon", 403));
+        }
+
+        const { code, discount, minAmount, maxAmount, productId, categoryId } = req.body;
+
+        if (code) {
+            const normalizedCode = code.trim().toLowerCase();
+            const existingWithCode = await Coupon.findOne({
+                code: normalizedCode,
+                _id: { $ne: couponId },
+            });
+            if (existingWithCode) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Coupon code already exists",
+                });
+            }
+            coupon.code = normalizedCode;
+        }
+
+        if (discount !== undefined && discount !== null) coupon.value = Number(discount);
+        if (minAmount !== undefined) coupon.minAmount = minAmount !== "" ? Number(minAmount) : null;
+        if (maxAmount !== undefined) coupon.maxAmount = maxAmount !== "" ? Number(maxAmount) : null;
+        if (productId) coupon.product = productId;
+        if (categoryId) coupon.category = categoryId;
+
+        if (coupon.minAmount != null && coupon.maxAmount != null && coupon.minAmount > coupon.maxAmount) {
+            return res.status(400).json({
+                success: false,
+                message: "Minimum amount cannot be greater than maximum amount",
+            });
+        }
+
+        await coupon.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Coupon updated successfully",
+            coupon,
+        });
+    } catch (error) {
+        console.error("Error in updateCoupon:", error);
+        return next(
+            new ErrorHandler("Failed to update coupon! " + error.message, 500)
+        );
+    }
+});
+
+export { createCoupon, updateCoupon, getCoupons, deleteCoupon, validateCoupon };

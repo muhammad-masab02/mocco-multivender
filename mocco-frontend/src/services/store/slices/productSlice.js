@@ -28,6 +28,26 @@ const productSlice = createSlice({
             state.error = action.payload;
         },
 
+        // update product
+        updateProductRequest: (state) => {
+            state.isLoading = true;
+        },
+        updateProductSuccess: (state, action) => {
+            state.isLoading = false;
+            const updated = action.payload;
+            const index = state.products.findIndex(
+                (p) => p._id === updated._id || p.id === updated._id
+            );
+            if (index !== -1) {
+                state.products[index] = updated;
+            }
+            state.error = null;
+        },
+        updateProductFail: (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload;
+        },
+
         // get all products (shop-specific)
         getProductsRequest: (state) => {
             state.isLoading = true;
@@ -133,6 +153,9 @@ export const {
     createProductRequest,
     createProductSuccess,
     createProductFail,
+    updateProductRequest,
+    updateProductSuccess,
+    updateProductFail,
     getProductsRequest,
     getProductsSuccess,
     getProductsFail,

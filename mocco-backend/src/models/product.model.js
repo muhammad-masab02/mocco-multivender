@@ -46,10 +46,6 @@ const productSchema = new Schema(
             type: Number,
             default: 0,
         },
-        sold_out: {
-            type: Number,
-            default: 0,
-        },
         isFeatured: {
             type: Boolean,
             default: false,

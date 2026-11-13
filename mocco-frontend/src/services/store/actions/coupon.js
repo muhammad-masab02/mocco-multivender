@@ -1,13 +1,24 @@
 import axios from "axios";
-import { createCouponFail, createCouponRequest, createCouponSuccess, deleteCouponFail, deleteCouponRequest, deleteCouponSuccess, getCouponsFail, getCouponsRequest, getCouponsSuccess } from "../slices/couponSlice";
-
+import {
+    createCouponFail,
+    createCouponRequest,
+    createCouponSuccess,
+    updateCouponFail,
+    updateCouponRequest,
+    updateCouponSuccess,
+    deleteCouponFail,
+    deleteCouponRequest,
+    deleteCouponSuccess,
+    getCouponsFail,
+    getCouponsRequest,
+    getCouponsSuccess,
+} from "../slices/couponSlice";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 // Create a new coupon
 const createCoupon = (couponFormData) => async (dispatch) => {
     try {
-
         dispatch(createCouponRequest());
 
         const { data } = await axios.post(`${backendUrl}/coupon/create`, couponFormData, {
@@ -18,7 +29,6 @@ const createCoupon = (couponFormData) => async (dispatch) => {
         });
         dispatch(createCouponSuccess(data.coupon));
         return data;
-
     } catch (error) {
         const message =
             error?.response?.data?.message ||
@@ -28,7 +38,31 @@ const createCoupon = (couponFormData) => async (dispatch) => {
         dispatch(createCouponFail(message));
         throw new Error(message);
     }
-}
+};
+
+// Update an existing coupon
+const updateCoupon = (couponId, couponFormData) => async (dispatch) => {
+    try {
+        dispatch(updateCouponRequest());
+
+        const { data } = await axios.put(`${backendUrl}/coupon/update/${couponId}`, couponFormData, {
+            headers: {
+                "Content-Type": "application/json",
+            },
+            withCredentials: true,
+        });
+        dispatch(updateCouponSuccess(data.coupon));
+        return data;
+    } catch (error) {
+        const message =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to update coupon";
+
+        dispatch(updateCouponFail(message));
+        throw new Error(message);
+    }
+};
 
 // Get all coupons
 const getCoupons = (shopId) => async (dispatch) => {
@@ -67,4 +101,4 @@ const deleteCoupon = (couponId) => async (dispatch) => {
     }
 }
 
-export { createCoupon, getCoupons, deleteCoupon };
+export { createCoupon, updateCoupon, getCoupons, deleteCoupon };

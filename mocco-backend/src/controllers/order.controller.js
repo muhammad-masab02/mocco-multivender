@@ -3,6 +3,8 @@ import ErrorHandler from "../utils/ErrorHandler.js";
 import Order from "../models/order.model.js";
 import Cart from "../models/cart.model.js";
 import Refund from "../models/refund.model.js";
+import Product from "../models/product.model.js";
+import Event from "../models/event.model.js";
 
 // ─── Valid status transitions (seller can only move forward, or cancel/return/refund) ───
 const VALID_TRANSITIONS = {
@@ -70,6 +72,28 @@ const createOrder = catchAsyncErrors(async (req, res, next) => {
                 return order;
             })
         );
+
+        // ─── Reserve stock immediately on order placement (prevent overselling) ──
+        // NOTE: total_sell is intentionally NOT updated here.
+        //       A product or event product is only truly "sold" when the seller marks it "Delivered".
+        //       Cancelled orders must never count toward the sales ranking.
+        const stockReserves = orderItems.map(async (item) => {
+            const qty = Number(item.quantity) || 1;
+            const targetId = item.productId || item._id;
+            const updatedProduct = await Product.findByIdAndUpdate(
+                targetId,
+                { $inc: { stock: -qty } },
+                { new: false }
+            );
+            if (!updatedProduct) {
+                await Event.findByIdAndUpdate(
+                    targetId,
+                    { $inc: { stock: -qty } },
+                    { new: false }
+                );
+            }
+        });
+        await Promise.allSettled(stockReserves);
 
         // Clear the user's cart after successful order creation
         await Cart.findOneAndUpdate({ userId }, { items: [] });
@@ -192,8 +216,54 @@ const updateOrderStatus = catchAsyncErrors(async (req, res, next) => {
             order.deliveredAt = Date.now();
         }
 
+        // ─── Side-effects based on new status ───────────────────────────────────
         order.status = status;
         await order.save();
+
+        if (status === "Delivered") {
+            // Confirm real sales: increment total_sell for every item in the order.
+            // Stock was already decremented when the order was placed.
+            const sellUpdates = order.items.map(async (item) => {
+                const qty = Number(item.quantity) || 1;
+                const targetId = item.productId;
+                const updatedProduct = await Product.findByIdAndUpdate(
+                    targetId,
+                    { $inc: { total_sell: qty } },
+                    { new: false }
+                );
+                if (!updatedProduct) {
+                    await Event.findByIdAndUpdate(
+                        targetId,
+                        { $inc: { total_sell: qty } },
+                        { new: false }
+                    );
+                }
+            });
+            await Promise.allSettled(sellUpdates);
+        }
+
+        if (status === "Cancelled") {
+            // Order cancelled before delivery: return the reserved stock.
+            // total_sell was never incremented, so nothing to reverse there.
+            const stockRestores = order.items.map(async (item) => {
+                const qty = Number(item.quantity) || 1;
+                const targetId = item.productId;
+                const updatedProduct = await Product.findByIdAndUpdate(
+                    targetId,
+                    { $inc: { stock: qty } },   // restore reserved stock
+                    { new: false }
+                );
+                if (!updatedProduct) {
+                    await Event.findByIdAndUpdate(
+                        targetId,
+                        { $inc: { stock: qty } },
+                        { new: false }
+                    );
+                }
+            });
+            await Promise.allSettled(stockRestores);
+        }
+        // ─────────────────────────────────────────────────────────────────────────
 
         await order.populate("user", "name email");
         await order.populate({

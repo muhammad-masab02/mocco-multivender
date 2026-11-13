@@ -22,8 +22,6 @@ const createEvent = catchAsyncErrors(async (req, res, next) => {
             price,
             discount_price,
             total_sell,
-            sold_out,
-
         } = req.body;
 
         // 2. Check if product already exists (same name in same shop)
@@ -60,8 +58,7 @@ const createEvent = catchAsyncErrors(async (req, res, next) => {
             price,
             discount_price,
             images,
-            total_sell,
-            sold_out,
+            total_sell: Number(total_sell) || 0,
             shop: shop._id, // link event to shop
         });
 
@@ -158,4 +155,70 @@ const deleteEvent = catchAsyncErrors(async (req, res, next) => {
     }
 });
 
-export { createEvent, getShopEvents, getAllEvents, deleteEvent };
+// update event by id (seller only)
+const updateEvent = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const eventId = req.params.id;
+        const sellerId = req.seller._id;
+
+        const event = await Event.findById(eventId);
+
+        if (!event) {
+            return next(new ErrorHandler("Event not found", 404));
+        }
+
+        if (event.shop.toString() !== sellerId.toString()) {
+            return next(new ErrorHandler("Not authorized to update this event", 403));
+        }
+
+        const {
+            name,
+            description,
+            category,
+            startDate,
+            endDate,
+            status,
+            tags,
+            stock,
+            price,
+            discount_price,
+        } = req.body;
+
+        if (name) event.name = name;
+        if (description) event.description = description;
+        if (category) event.category = category;
+        if (startDate) event.startDate = startDate;
+        if (endDate) event.endDate = endDate;
+        if (status) event.status = status;
+        if (tags) event.tags = typeof tags === "string" ? tags.split(",").map(t => t.trim()) : tags;
+        if (stock !== undefined && stock !== null) event.stock = Number(stock);
+        if (price !== undefined && price !== null) event.price = Number(price);
+        if (discount_price !== undefined && discount_price !== null) event.discount_price = Number(discount_price);
+
+        // Handle replacement images
+        if (req.files && req.files.length > 0) {
+            if (Array.isArray(event.images) && event.images.length > 0) {
+                await Promise.allSettled(
+                    event.images.map(img => deleteFromCloudinary(img.public_id))
+                );
+            }
+            const uploadPromises = req.files.map(file => uploadToCloudinary(file, "mocco/events"));
+            event.images = await Promise.all(uploadPromises);
+        }
+
+        await event.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Event updated successfully",
+            event,
+        });
+    } catch (error) {
+        console.error("Error in updateEvent:", error);
+        return next(
+            new ErrorHandler("Failed to update event! " + error.message, 500)
+        );
+    }
+});
+
+export { createEvent, updateEvent, getShopEvents, getAllEvents, deleteEvent };

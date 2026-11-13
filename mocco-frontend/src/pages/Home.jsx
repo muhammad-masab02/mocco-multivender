@@ -90,8 +90,16 @@ function Home() {
           handleClick={handleClick}
         /> */}
         {isBestSellingLoading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
-            Loading best-selling products...
+          <div className="space-y-4">
+            <div className="h-8 w-48 bg-slate-200 rounded-lg animate-pulse" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-lg border border-slate-100 bg-slate-100 h-72 animate-pulse"
+                />
+              ))}
+            </div>
           </div>
         ) : bestSellingProducts?.length > 0 ? (
           <BestSelling
@@ -99,7 +107,11 @@ function Home() {
             limit={8}
             handleClick={handleClick}
           />
-        ) : null}
+        ) : (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-400 shadow-sm">
+            No products available yet — check back soon!
+          </div>
+        )}
       </section>
 
       <section className="w-full py-12 px-5">

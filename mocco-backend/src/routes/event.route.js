@@ -1,5 +1,5 @@
 import express from "express";
-import { createEvent, deleteEvent, getShopEvents, getAllEvents } from "../controllers/event.controller.js";
+import { createEvent, updateEvent, deleteEvent, getShopEvents, getAllEvents } from "../controllers/event.controller.js";
 import isSellerAuthenticated from "../middlewares/sellerAuth.js";
 import upload from "../../multer.js";
 
@@ -15,6 +15,12 @@ eventRouter.post(
 eventRouter.get("/all-events", getAllEvents);
 // shop scoped events
 eventRouter.get("/all/:shopId", getShopEvents);
+eventRouter.put(
+    "/update/:id",
+    isSellerAuthenticated,
+    upload.array("files", 10),
+    updateEvent,
+);
 eventRouter.delete("/delete/:id", isSellerAuthenticated, deleteEvent);
 
 export default eventRouter;

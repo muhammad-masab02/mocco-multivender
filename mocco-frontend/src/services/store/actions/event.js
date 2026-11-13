@@ -1,13 +1,24 @@
 import axios from "axios";
-import { createEventFail, createEventRequest, createEventSuccess, deleteEventFail, deleteEventRequest, deleteEventSuccess, getEventsFail, getEventsRequest, getEventsSuccess } from "../slices/eventSlice";
-
+import {
+    createEventFail,
+    createEventRequest,
+    createEventSuccess,
+    updateEventFail,
+    updateEventRequest,
+    updateEventSuccess,
+    deleteEventFail,
+    deleteEventRequest,
+    deleteEventSuccess,
+    getEventsFail,
+    getEventsRequest,
+    getEventsSuccess,
+} from "../slices/eventSlice";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 // Create a new event
 const createEvent = (eventFormData) => async (dispatch) => {
     try {
-
         dispatch(createEventRequest());
 
         const { data } = await axios.post(`${backendUrl}/event/create`, eventFormData, {
@@ -18,7 +29,6 @@ const createEvent = (eventFormData) => async (dispatch) => {
         });
         dispatch(createEventSuccess(data.event));
         return data;
-
     } catch (error) {
         const message =
             error?.response?.data?.message ||
@@ -28,7 +38,31 @@ const createEvent = (eventFormData) => async (dispatch) => {
         dispatch(createEventFail(message));
         throw new Error(message);
     }
-}
+};
+
+// Update an existing event
+const updateEvent = (eventId, eventFormData) => async (dispatch) => {
+    try {
+        dispatch(updateEventRequest());
+
+        const { data } = await axios.put(`${backendUrl}/event/update/${eventId}`, eventFormData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+            withCredentials: true,
+        });
+        dispatch(updateEventSuccess(data.event));
+        return data;
+    } catch (error) {
+        const message =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to update event";
+
+        dispatch(updateEventFail(message));
+        throw new Error(message);
+    }
+};
 
 // Get all events
 const getEvents = (shopId) => async (dispatch) => {
@@ -83,4 +117,4 @@ const deleteEvent = (eventId) => async (dispatch) => {
     }
 }
 
-export { createEvent, getEvents, getAllEvents, deleteEvent };
+export { createEvent, updateEvent, getEvents, getAllEvents, deleteEvent };

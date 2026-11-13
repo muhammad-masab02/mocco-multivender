@@ -3,6 +3,9 @@ import {
     createProductRequest,
     createProductSuccess,
     createProductFail,
+    updateProductRequest,
+    updateProductSuccess,
+    updateProductFail,
     getProductsRequest,
     getProductsSuccess,
     getProductsFail,
@@ -51,6 +54,32 @@ const createProduct = (productFormData) => async (dispatch) => {
             error?.message ||
             "Failed to create product";
         dispatch(createProductFail(message));
+        throw new Error(message);
+    }
+};
+
+// Update an existing product
+const updateProduct = (productId, productFormData) => async (dispatch) => {
+    try {
+        dispatch(updateProductRequest());
+
+        const { data } = await axios.put(
+            `${backendUrl}/product/update/${productId}`,
+            productFormData,
+            {
+                headers: { "Content-Type": "multipart/form-data" },
+                withCredentials: true,
+            }
+        );
+        const normalized = normalizeProduct(data.product);
+        dispatch(updateProductSuccess(normalized));
+        return data;
+    } catch (error) {
+        const message =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to update product";
+        dispatch(updateProductFail(message));
         throw new Error(message);
     }
 };
@@ -183,6 +212,7 @@ const deleteProduct = (productId) => async (dispatch) => {
 
 export {
     createProduct,
+    updateProduct,
     getProducts,
     getAllProducts,
     getFeaturedProducts,
