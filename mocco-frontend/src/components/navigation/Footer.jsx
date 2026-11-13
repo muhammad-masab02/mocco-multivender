@@ -4,6 +4,9 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   const { isUserAuthenticated } = useSelector((state) => state.user);
+  const { seller, isSellerAuthenticated } = useSelector(
+    (state) => state.seller,
+  );
 
   return (
     <footer className="bg-black text-white pt-10 pb-6">
@@ -35,21 +38,50 @@ const Footer = () => {
             <ul className="space-y-2 text-gray-400 text-sm">
               {isUserAuthenticated ? (
                 <li>
-                  <Link to="/my-profile">My Account</Link>
+                  <Link
+                    to="/my-profile"
+                    className="hover:text-white transition-colors"
+                  >
+                    My Account
+                  </Link>
                 </li>
               ) : (
                 <li>
-                  <Link to="/login">Login / Register</Link>
+                  <Link
+                    to="/login"
+                    className="hover:text-white transition-colors"
+                  >
+                    Login / Register
+                  </Link>
                 </li>
               )}
               <li>
-                <Link to="/cart">Cart</Link>
+                <Link
+                  to="/cart"
+                  className="hover:text-white transition-colors"
+                >
+                  Cart
+                </Link>
               </li>
               <li>
-                <Link to="/wishlist">Wishlist</Link>
+                <Link
+                  to="/wishlist"
+                  className="hover:text-white transition-colors"
+                >
+                  Wishlist
+                </Link>
               </li>
               <li>
-                <Link to="/shop">Shop</Link>
+                <Link
+                  to={
+                    isSellerAuthenticated && seller?._id
+                      ? `/shop/${seller._id}`
+                      : "/shop-create"
+                  }
+                  className="hover:text-white transition-colors"
+                >
+                  {isSellerAuthenticated ? "My Shop" : "Become a Seller"}
+                </Link>
               </li>
             </ul>
           </div>
@@ -58,19 +90,44 @@ const Footer = () => {
             <h5 className="text-lg font-semibold mb-4">Quick Links</h5>
             <ul className="space-y-2 text-gray-400 text-sm">
               <li>
-                <Link to="/privacy-policy">Privacy Policy</Link>
+                <Link
+                  to="/privacy-policy"
+                  className="hover:text-white transition-colors"
+                >
+                  Privacy Policy
+                </Link>
               </li>
               <li>
-                <Link to="/terms-of-use">Terms of Use</Link>
+                <Link
+                  to="/terms-of-use"
+                  className="hover:text-white transition-colors"
+                >
+                  Terms of Use
+                </Link>
               </li>
               <li>
-                <Link to="/faqs">FAQ</Link>
+                <Link
+                  to="/faq"
+                  className="hover:text-white transition-colors"
+                >
+                  FAQ
+                </Link>
               </li>
               <li>
-                <Link to="/contact">Contact</Link>
+                <Link
+                  to="/contact"
+                  className="hover:text-white transition-colors"
+                >
+                  Contact
+                </Link>
               </li>
               <li>
-                <Link to="/about">About</Link>
+                <Link
+                  to="/about"
+                  className="hover:text-white transition-colors"
+                >
+                  About
+                </Link>
               </li>
             </ul>
           </div>
@@ -116,7 +173,7 @@ const Footer = () => {
           <p className="text-center text-gray-500 mt-2 text-sm">
             Made with <span className="text-red-500">♥</span> by{" "}
             <a
-              href="https://github.com/MuhammadMasab002"
+              href="https://github.com/muhammad-masab02"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-500 hover:underline"

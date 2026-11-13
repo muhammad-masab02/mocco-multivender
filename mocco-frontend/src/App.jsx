@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loadUser } from "./services/store/actions/user";
@@ -29,6 +29,8 @@ import Wishlist from "./pages/WishList.jsx";
 import MyProfile from "./pages/MyProfile.jsx";
 import About from "./pages/About.jsx";
 import FAQ from "./pages/FAQ.jsx";
+import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
+import TermsOfUse from "./pages/TermsOfUse.jsx";
 import SignIn from "./pages/SignIn.jsx";
 import SignUp from "./pages/SignUp.jsx";
 import ShopLogin from "./pages/ShopLogin.jsx";
@@ -58,6 +60,9 @@ function App() {
   const dispatch = useDispatch();
 
   const { isUserAuthenticated } = useSelector((state) => state.user);
+  const { seller, isSellerAuthenticated } = useSelector(
+    (state) => state.seller,
+  );
 
   const [stripeApiKey, setStripeApiKey] = useState("");
 
@@ -216,6 +221,9 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/faqs" element={<FAQ />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-use" element={<TermsOfUse />} />
 
           <Route
             path="/login"
@@ -235,6 +243,16 @@ function App() {
           />
 
           {/* shop routes */}
+          <Route
+            path="/shop"
+            element={
+              isSellerAuthenticated && seller?._id ? (
+                <Navigate to={`/shop/${seller._id}`} replace />
+              ) : (
+                <Navigate to="/shop-create" replace />
+              )
+            }
+          />
           <Route
             path="/shop-login"
             element={
