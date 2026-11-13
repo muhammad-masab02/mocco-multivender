@@ -78,10 +78,11 @@ function Home() {
   };
 
   return (
-    <div className="w-full h-full justify-center items-center flex flex-col gap-4 my-4">
-      {/* <h1 className="text-3xl font-bold text-red-500">Welcome to Mocco Mart</h1> */}
+    <div className="w-full flex flex-col">
       <HeroSection handleCategoryClick={handleCategoryClick} />
-      <CategoriesGrid handleCategoryClick={handleCategoryClick} />
+
+      <div className="w-full flex flex-col items-center">
+        <CategoriesGrid handleCategoryClick={handleCategoryClick} />
 
       <section className="w-full max-w-7xl px-5 py-8 space-y-20">
         {/* <FlashSales
@@ -193,6 +194,7 @@ function Home() {
       </section>
 
       <SponsoredBrands />
+      </div>
     </div>
   );
 }

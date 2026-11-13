@@ -6,7 +6,7 @@ export default function MainLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
-      <main className="container px-4 py-6 flex flex-col m-auto">
+      <main className="flex-1 w-full flex flex-col">
         <Outlet />
       </main>
       <Footer />

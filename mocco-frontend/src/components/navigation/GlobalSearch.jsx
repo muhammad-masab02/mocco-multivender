@@ -61,7 +61,7 @@ const GlobalSearch = () => {
   };
 
   return (
-    <div className="relative w-full max-w-lg mx-auto" ref={searchRef}>
+    <div className="relative z-50 w-full max-w-lg mx-auto" ref={searchRef}>
       {/* Search Input Box */}
       <div
         className={`relative flex items-center w-full h-11 bg-slate-100/80 backdrop-blur-sm border transition-all duration-300
