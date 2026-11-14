@@ -89,7 +89,7 @@ const Footer = () => {
                 <Twitter size={16} />
               </a>
               <a
-                href="https://github.com/MuhammadMasab002"
+                href="https://github.com/muhammad-masab02"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"
@@ -260,7 +260,7 @@ const Footer = () => {
             <span className="hidden sm:inline">
               Made with <span className="text-red-500">♥</span> by{" "}
               <a
-                href="https://github.com/MuhammadMasab002"
+                href="https://github.com/muhammad-masab02"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-neutral-400 hover:text-white transition-colors"
