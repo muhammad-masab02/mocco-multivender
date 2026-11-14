@@ -210,7 +210,7 @@ const getSeller = async (req, res, next) => {
 const getShopInfo = async (req, res, next) => {
     try {
         const { shopId } = req.params;
-        const shop = await Shop.findById(shopId).select("-password -email -phoneNumber");
+        const shop = await Shop.findById(shopId).select("-password -phoneNumber");
 
         if (!shop) {
             return next(new ErrorHandler("Shop not found!", 404));

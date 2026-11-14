@@ -13,33 +13,38 @@ import {
   PencilLine,
   Phone,
   Star,
+  Store,
+  ShieldCheck,
+  CheckCircle2,
 } from "lucide-react";
 import { formatJoinedDate, toTitle } from "./utils";
 import { createConversation } from "../../services/store/actions/conversation";
 
-const InfoRow = ({ icon, label, value }) => {
-  const IconComponent = icon;
-
+const InfoRow = ({ icon: IconComponent, label, value }) => {
   return (
-    <div>
-      <p className="mb-1 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-        <IconComponent size={13} />
-        {label}
-      </p>
-      <p className="text-[15px] font-medium text-slate-700 wrap-break-word">
-        {value || "-"}
-      </p>
+    <div className="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-0">
+      <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0 mt-0.5">
+        <IconComponent className="w-4 h-4 text-slate-500" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          {label}
+        </p>
+        <p className="text-xs sm:text-sm font-semibold text-slate-800 break-words mt-0.5">
+          {value || "Not provided"}
+        </p>
+      </div>
     </div>
   );
 };
 
 const MyShopSidebar = ({
   displayShop,
-  totalProducts,
+  totalProducts = 0,
   sellerCreatedAt,
   onEditClick,
   onLogout,
-  isOwner,
+  isOwner = false,
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -49,6 +54,7 @@ const MyShopSidebar = ({
   const handleSendMessage = async () => {
     if (!user?._id) {
       toast.error("Please login to send message!");
+      navigate("/login");
       return;
     }
 
@@ -57,7 +63,7 @@ const MyShopSidebar = ({
       return;
     }
 
-    toast.loading("Creating conversation...", { id: "conv-toast" });
+    toast.loading("Opening conversation...", { id: "conv-toast" });
 
     const res = await dispatch(
       createConversation({
@@ -85,46 +91,73 @@ const MyShopSidebar = ({
     }
   };
 
+  const ratingVal = Number(displayShop.ratings || 0);
+
   return (
-    <aside className="h-fit self-start rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_12px_36px_rgba(15,23,42,0.08)] sm:p-6 xl:sticky xl:top-20">
+    <aside className="w-full rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs space-y-6">
+      {/* Shop Avatar & Name Card */}
       <div className="flex flex-col items-center text-center">
-        <img
-          src={displayShop.avatarUrl}
-          alt="Shop avatar"
-          className="h-24 w-24 rounded-full border border-slate-200 object-cover shadow sm:h-28 sm:w-28"
-        />
-        <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-800">
+        <div className="relative">
+          <img
+            src={displayShop.avatarUrl}
+            alt={displayShop.name || "Shop avatar"}
+            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white object-cover shadow-md ring-2 ring-slate-100"
+          />
+          <span className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white shadow-xs" title="Verified Seller">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+          </span>
+        </div>
+
+        <h2 className="mt-4 text-lg sm:text-xl font-black text-slate-900 tracking-tight">
           {toTitle(displayShop.name)}
         </h2>
-        {isOwner && (
-          <p className="mt-1 text-sm text-slate-500">
-            Manage your storefront with confidence
+
+        <div className="mt-1 flex items-center gap-1.5 text-xs font-bold text-amber-500 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
+          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+          <span>{ratingVal > 0 ? ratingVal.toFixed(1) : "New Seller"}</span>
+          {ratingVal > 0 && <span className="text-slate-400 font-normal">/ 5.0</span>}
+        </div>
+
+        {displayShop.description && (
+          <p className="mt-3 text-xs text-slate-500 leading-relaxed max-w-xs text-center line-clamp-3">
+            {displayShop.description}
           </p>
         )}
       </div>
 
-      <div className="my-5 h-px bg-slate-200" />
-
-      <div className="space-y-2">
-        {isOwner && (
-          <InfoRow icon={Mail} label="Email" value={displayShop.email} />
+      {/* Info Rows */}
+      <div className="border-t border-slate-100 pt-4">
+        {displayShop.email ? (
+          <div className="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-0">
+            <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0 mt-0.5">
+              <Mail className="w-4 h-4 text-slate-500" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Email Address
+              </p>
+              <a
+                href={`mailto:${displayShop.email}`}
+                className="text-xs sm:text-sm font-semibold text-slate-800 hover:text-red-600 transition-colors break-all mt-0.5 inline-block"
+              >
+                {displayShop.email}
+              </a>
+            </div>
+          </div>
+        ) : null}
+        {displayShop.addresses && (
+          <InfoRow icon={MapPin} label="Location" value={displayShop.addresses} />
         )}
-        <InfoRow icon={MapPin} label="Address" value={displayShop.addresses} />
-        {isOwner && (
+        {isOwner && displayShop.phoneNumber && (
           <InfoRow
             icon={Phone}
-            label="Phone Number"
+            label="Phone"
             value={displayShop.phoneNumber}
           />
         )}
-        {isOwner && (
+        {isOwner && displayShop.zipCode && (
           <InfoRow icon={Hash} label="Zip Code" value={displayShop.zipCode} />
         )}
-        <InfoRow
-          icon={Star}
-          label="Shop Rating"
-          value={displayShop.ratings ? `${Number(displayShop.ratings).toFixed(1)} / 5.0 ★` : "No ratings yet"}
-        />
         <InfoRow
           icon={Package}
           label="Total Products"
@@ -132,43 +165,50 @@ const MyShopSidebar = ({
         />
         <InfoRow
           icon={CalendarClock}
-          label="Joined On"
+          label="Member Since"
           value={formatJoinedDate(sellerCreatedAt)}
         />
       </div>
 
-      {isOwner ? (
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1">
-          <button
-            type="button"
-            onClick={onEditClick}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-sky-200 bg-linear-to-b from-sky-50 to-sky-100 px-4 py-2.5 text-sm font-semibold text-sky-700 transition hover:from-sky-100 hover:to-sky-100"
-          >
-            <PencilLine size={16} />
-            Edit Shop
-          </button>
+      {/* Action Buttons */}
+      <div className="pt-2">
+        {isOwner ? (
+          <div className="grid grid-cols-1 gap-2.5">
+            <button
+              type="button"
+              onClick={onEditClick}
+              className="w-full inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 transition shadow-xs"
+            >
+              <PencilLine className="w-4 h-4 text-slate-500" />
+              <span>Edit Store Info</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={onLogout}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-linear-to-r from-slate-900 to-slate-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-slate-800 hover:to-slate-700"
-          >
-            <LogOut size={16} />
-            Log Out
-          </button>
-        </div>
-      ) : (
-        <div className="mt-6">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="w-full inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-red-50 hover:bg-red-100 border border-red-200 px-4 py-2.5 text-xs sm:text-sm font-bold text-red-600 transition"
+            >
+              <LogOut className="w-4 h-4 text-red-600" />
+              <span>Seller Logout</span>
+            </button>
+          </div>
+        ) : (
           <button
             type="button"
             onClick={handleSendMessage}
-            className="w-full inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-purple-600 hover:bg-purple-700 px-4 py-3 text-sm font-semibold text-white transition shadow-sm"
+            className="w-full inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-[0.98] px-4 py-3 text-xs sm:text-sm font-bold text-white transition shadow-md shadow-slate-900/20"
           >
-            <MessageSquare size={16} />
-            Send Message to Seller
+            <MessageSquare className="w-4 h-4 text-red-400" />
+            <span>Message Seller</span>
           </button>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Trust Badge */}
+      <div className="pt-3 border-t border-slate-100 flex items-center justify-center gap-2 text-[11px] text-slate-400 font-medium">
+        <ShieldCheck className="w-4 h-4 text-emerald-500" />
+        <span>Verified Mocco Mart Merchant</span>
+      </div>
     </aside>
   );
 };
