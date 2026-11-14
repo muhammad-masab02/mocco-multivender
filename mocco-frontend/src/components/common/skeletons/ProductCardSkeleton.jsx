@@ -16,10 +16,10 @@ export const ProductCardSkeleton = ({ count = 1, className = "" }) => {
   const renderSingleCard = (key) => (
     <div
       key={key}
-      className={`relative flex flex-col overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all ${className}`}
+      className={`relative flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs transition-all ${className}`}
     >
       {/* Image Area Skeleton */}
-      <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-slate-100 animate-pulse flex items-center justify-center">
+      <div className="relative aspect-square w-full overflow-hidden bg-slate-100 animate-pulse flex items-center justify-center">
         {/* Subtle camera/image icon placeholder */}
         <div className="h-10 w-10 rounded-full bg-slate-200/60" />
 
