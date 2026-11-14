@@ -50,15 +50,21 @@ const Header = () => {
     dispatch(getAllEvents());
   }, [dispatch]);
 
-  // Scroll listener to hide top search bar on scroll
+  // Hysteresis-based scroll listener — hides search bar above 110px, shows it below 25px.
+  // This wide hysteresis gap completely eliminates boundary jitter/blinking during half scroll.
   useEffect(() => {
+    const HIDE_THRESHOLD = 110;
+    const SHOW_THRESHOLD = 25;
+
     const handleScroll = () => {
-      if (window.scrollY > 40) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      const y = window.scrollY;
+      setIsScrolled((prev) => {
+        if (!prev && y > HIDE_THRESHOLD) return true;
+        if (prev && y < SHOW_THRESHOLD) return false;
+        return prev;
+      });
     };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -112,14 +118,17 @@ const Header = () => {
   const handleMenuClose = () => setMenuOpen(false);
 
   return (
-    <header className="w-full sticky top-0 z-50 shadow-md bg-white">
+    <header className="w-full sticky top-0 z-50 bg-white shadow-md">
       {/* ── Top Bar: Logo, Global Search & Open Your Shop ─────────────────────── */}
       <div
-        className={`relative z-30 transition-all duration-300 ease-in-out border-b border-gray-100 bg-white ${
+        className={`transition-all duration-300 ease-in-out border-b border-gray-100 bg-white ${
           isScrolled
-            ? "max-h-0 opacity-0 py-0 border-none pointer-events-none overflow-hidden"
-            : "max-h-24 opacity-100 py-3 sm:py-3.5 overflow-visible"
+            ? "max-h-0 opacity-0 -translate-y-2 pointer-events-none overflow-hidden py-0 border-none"
+            : "max-h-28 opacity-100 translate-y-0 py-3 sm:py-3.5 relative z-30"
         }`}
+        style={{
+          overflow: isScrolled ? "hidden" : "visible",
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 sm:gap-6">
           {/* Logo with Marketplace subtitle */}
@@ -139,7 +148,7 @@ const Header = () => {
 
           {/* Center: Global Search Bar */}
           <div className="flex-1 max-w-2xl mx-1 sm:mx-6">
-            <GlobalSearch />
+            <GlobalSearch isScrolled={isScrolled} />
           </div>
 
           {/* Right: Open Your Shop Action Button */}
