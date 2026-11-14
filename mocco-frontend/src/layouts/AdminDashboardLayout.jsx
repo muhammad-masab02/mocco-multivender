@@ -6,6 +6,8 @@ import AdminDashboardSidebar from "../components/adminDashboard/AdminDashboardSi
 import { adminDashboardItems } from "../components/adminDashboard/constants/adminDashboardItems";
 import { loadUser } from "../services/store/actions/user";
 
+import toast from "react-hot-toast";
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const AdminDashboardLayout = () => {
@@ -24,6 +26,7 @@ const AdminDashboardLayout = () => {
         withCredentials: true,
       });
       if (data?.success) {
+        toast.success("Logged out successfully");
         dispatch(loadUser());
         navigate("/login", { replace: true });
       }
@@ -32,7 +35,7 @@ const AdminDashboardLayout = () => {
         error?.response?.data?.message ||
         error?.message ||
         "Unable to logout right now.";
-      window.alert(message);
+      toast.error(message);
     }
   };
 
