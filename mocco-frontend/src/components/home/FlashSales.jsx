@@ -1,6 +1,7 @@
 // FlashSales.jsx
 import React, { useEffect, useRef, useState } from "react";
 import ProductCard from "../common/products/ProductCard";
+import { ProductCardSkeleton } from "../common/skeletons";
 import CustomButton from "../common/CustomButton";
 import { useNavigate } from "react-router-dom";
 
@@ -15,7 +16,7 @@ const getTimeParts = (sec) => {
 
 const FLASH_SALES_DURATION = 3 * 24 * 3600 + 5 * 3600;
 
-const FlashSales = ({ products = [], limit = 4, handleClick }) => {
+const FlashSales = ({ products = [], limit = 4, handleClick, isLoading = false }) => {
   const navigate = useNavigate();
 
   const [remaining, setRemaining] = useState(FLASH_SALES_DURATION);
@@ -86,13 +87,17 @@ const FlashSales = ({ products = [], limit = 4, handleClick }) => {
       </div>
 
       <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {products?.slice(0, limit)?.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            handleClick={handleClick}
-          />
-        ))}
+        {isLoading ? (
+          <ProductCardSkeleton count={limit || 4} />
+        ) : (
+          products?.slice(0, limit)?.map((product) => (
+            <ProductCard
+              key={product._id || product.id}
+              product={product}
+              handleClick={handleClick}
+            />
+          ))
+        )}
       </div>
 
       <div className="flex justify-center mt-10 md:hidden">

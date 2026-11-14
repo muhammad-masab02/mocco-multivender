@@ -3,6 +3,7 @@ import BestSelling from "../components/home/BestSelling";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getBestSellingProducts } from "../services/store/actions/product";
+import { ProductCardSkeleton } from "../components/common/skeletons";
 
 const BestSellingPage = () => {
   const navigate = useNavigate();
@@ -37,8 +38,8 @@ const BestSellingPage = () => {
       </div>
 
       {isLoading ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
-          Loading best-selling products...
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <ProductCardSkeleton count={8} />
         </div>
       ) : bestSellingProducts.length > 0 ? (
         <BestSelling

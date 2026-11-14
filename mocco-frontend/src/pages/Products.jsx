@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import ProductCard from "../components/common/products/ProductCard";
+import { ProductCardSkeleton } from "../components/common/skeletons";
 import {
   getAllProducts,
   getFeaturedProducts,
@@ -63,17 +64,21 @@ const Products = () => {
           {pageDescription}
         </p>
       </div>
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            handleClick={handleClick}
-          />
-        ))}
-      </div>
-
-      {products.length === 0 && !productLoading && (
+      {productLoading ? (
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <ProductCardSkeleton count={8} />
+        </div>
+      ) : products.length > 0 ? (
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {products.map((product) => (
+            <ProductCard
+              key={product._id || product.id}
+              product={product}
+              handleClick={handleClick}
+            />
+          ))}
+        </div>
+      ) : (
         <div className="text-center text-gray-500 mt-10">
           No products found.
         </div>

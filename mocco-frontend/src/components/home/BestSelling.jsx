@@ -1,5 +1,6 @@
 import React from "react";
 import ProductCard from "../common/products/ProductCard";
+import { ProductCardSkeleton } from "../common/skeletons";
 import CustomButton from "../common/CustomButton";
 import { useNavigate } from "react-router-dom";
 
@@ -8,6 +9,7 @@ const BestSelling = ({
   limit = 4,
   isFullPage = false,
   handleClick,
+  isLoading = false,
 }) => {
   const navigate = useNavigate();
   const productList = Array.isArray(products) ? products : [];
@@ -41,7 +43,9 @@ const BestSelling = ({
       </div>
 
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {Array.isArray(bestSellingProducts) &&
+        {isLoading ? (
+          <ProductCardSkeleton count={typeof limit === "number" ? limit : 8} />
+        ) : Array.isArray(bestSellingProducts) &&
         bestSellingProducts.length > 0 ? (
           bestSellingProducts.map((product) => (
             <ProductCard

@@ -3,6 +3,7 @@ import ProductDetailInfo from "../components/common/products/ProductDetailInfo";
 import { getImageUrl } from "../utils/imageUrl.js";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import ProductCard from "../components/common/products/ProductCard";
+import { ProductCardSkeleton } from "../components/common/skeletons";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -142,8 +143,25 @@ export const ProductDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="w-full flex justify-center py-20 text-slate-500">
-        <p>Loading product details...</p>
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+        {/* Main Product Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+          <div className="h-96 sm:h-[480px] w-full rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="space-y-5 py-4">
+            <div className="h-4 w-28 bg-slate-200 rounded-full animate-pulse" />
+            <div className="h-8 w-3/4 bg-slate-200 rounded-lg animate-pulse" />
+            <div className="h-6 w-32 bg-slate-200 rounded-md animate-pulse" />
+            <div className="h-20 w-full bg-slate-100 rounded-xl animate-pulse" />
+            <div className="h-12 w-48 bg-slate-200 rounded-full animate-pulse" />
+          </div>
+        </div>
+        {/* Related Products Skeleton */}
+        <div className="space-y-6 pt-10 border-t border-slate-100">
+          <div className="h-6 w-48 bg-slate-200 rounded-md animate-pulse mx-auto" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <ProductCardSkeleton count={4} />
+          </div>
+        </div>
       </div>
     );
   }

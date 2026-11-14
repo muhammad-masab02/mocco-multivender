@@ -8,7 +8,7 @@ import NewArrivalProducts from "../components/home/NewArrivalProducts";
 import { useNavigate } from "react-router-dom";
 import CategoriesGrid from "../components/home/CategoriesGrid";
 // import { productData } from "../static/data.jsx";
-// import { getAllEvents } from "../services/store/actions/event";
+import { getAllEvents } from "../services/store/actions/event";
 import {
   // getAllProducts,
   getFeaturedProducts,
@@ -17,6 +17,10 @@ import {
 import FeatureProducts from "../components/home/FeatureProducts.jsx";
 import SponsoredBrands from "../components/home/SponsoredBrands.jsx";
 import EventCard from "../components/home/EventCard.jsx";
+import {
+  ProductCardSkeleton,
+  EventCardSkeleton,
+} from "../components/common/skeletons";
 
 const MAX_HOME_EVENT_PRODUCTS = 6;
 const HOME_EVENT_SECONDARY_LIMIT = 4;
@@ -37,7 +41,9 @@ const scoreEventProduct = (product) => {
 function Home() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { events: storeEvents } = useSelector((state) => state.event);
+  const { events: storeEvents, isLoading: isEventsLoading } = useSelector(
+    (state) => state.event,
+  );
   const {
     products: allProducts,
     featuredProducts,
@@ -48,8 +54,7 @@ function Home() {
   } = useSelector((state) => state.product);
 
   useEffect(() => {
-    // dispatch(getAllEvents());
-    // dispatch(getAllProducts());
+    dispatch(getAllEvents());
     dispatch(getFeaturedProducts());
     dispatch(getBestSellingProducts());
   }, [dispatch]);
@@ -94,12 +99,7 @@ function Home() {
           <div className="space-y-4">
             <div className="h-8 w-48 bg-slate-200 rounded-lg animate-pulse" />
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-lg border border-slate-100 bg-slate-100 h-72 animate-pulse"
-                />
-              ))}
+              <ProductCardSkeleton count={8} />
             </div>
           </div>
         ) : bestSellingProducts?.length > 0 ? (
@@ -136,7 +136,14 @@ function Home() {
             </button>
           </div>
 
-          {heroEventProduct ? (
+          {isEventsLoading && !heroEventProduct ? (
+            <div className="space-y-5">
+              <EventCardSkeleton variant="hero" />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <EventCardSkeleton variant="compact" count={4} />
+              </div>
+            </div>
+          ) : heroEventProduct ? (
             <div className="space-y-5">
               <EventCard eventProduct={heroEventProduct} showMoreCta={false} />
 
@@ -170,8 +177,15 @@ function Home() {
 
       <section className="w-full max-w-7xl px-5 py-8 space-y-8 sm:space-y-12">
         {isFeaturedLoading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
-            Loading featured products...
+          <div className="space-y-6">
+            <div className="text-center mb-8 space-y-2">
+              <div className="h-3.5 w-32 bg-slate-200 rounded-full animate-pulse mx-auto" />
+              <div className="h-8 w-60 bg-slate-200 rounded-lg animate-pulse mx-auto" />
+              <div className="w-16 h-1 bg-red-500/40 rounded-full mx-auto" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <ProductCardSkeleton count={8} />
+            </div>
           </div>
         ) : (
           <FeatureProducts

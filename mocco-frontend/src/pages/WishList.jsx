@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ProductCard from "../components/common/products/ProductCard";
+import { ProductCardSkeleton } from "../components/common/skeletons";
 import CustomButton from "../components/common/CustomButton";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -122,9 +123,8 @@ const Wishlist = () => {
 
         {/* State: Loading */}
         {isLoading && (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <Loader2 className="w-10 h-10 animate-spin mb-4" />
-            <p>Loading your wishlist...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <ProductCardSkeleton count={8} />
           </div>
         )}
 

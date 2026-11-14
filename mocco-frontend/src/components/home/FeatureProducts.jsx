@@ -1,5 +1,6 @@
 import React from "react";
 import ProductCard from "../common/products/ProductCard";
+import { ProductCardSkeleton } from "../common/skeletons";
 import CustomButton from "../common/CustomButton";
 import { useNavigate } from "react-router-dom";
 
@@ -13,12 +14,14 @@ import { useNavigate } from "react-router-dom";
  *  - limit        : max number to display (default 8, pass Infinity for all)
  *  - handleClick  : (productId) => void
  *  - isProductPage: boolean — changes CTA label
+ *  - isLoading    : boolean (default false)
  */
 const FeatureProducts = ({
   products = [],
   limit = 8,
   handleClick,
   isProductPage = false,
+  isLoading = false,
 }) => {
   const navigate = useNavigate();
 
@@ -48,7 +51,9 @@ const FeatureProducts = ({
 
       {/* Product grid */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {displayedProducts.length > 0 ? (
+        {isLoading ? (
+          <ProductCardSkeleton count={typeof limit === "number" ? limit : 8} />
+        ) : displayedProducts.length > 0 ? (
           displayedProducts.map((product) => (
             <ProductCard
               key={product._id || product.id}

@@ -9,6 +9,10 @@ import MyShopSidebar from "../components/myShop/MyShopSidebar";
 import MyShopHeader from "../components/myShop/MyShopHeader";
 import ShopProductCard from "../components/myShop/ShopProductCard";
 import ShopEventCard from "../components/myShop/ShopEventCard";
+import {
+  ShopProductCardSkeleton,
+  ShopEventCardSkeleton,
+} from "../components/common/skeletons";
 import ShopEmptyState from "../components/myShop/ShopEmptyState";
 import EditShopModal from "../components/myShop/EditShopModal";
 import { backendUrl, initialFormState } from "../components/myShop/utils";
@@ -19,8 +23,12 @@ const MyShop = () => {
   const navigate = useNavigate();
 
   const { seller } = useSelector((state) => state.seller);
-  const { products: storeProducts } = useSelector((state) => state.product);
-  const { events: storeEvents } = useSelector((state) => state.event);
+  const { products: storeProducts, isLoading: isProductsLoading } = useSelector(
+    (state) => state.product,
+  );
+  const { events: storeEvents, isLoading: isEventsLoading } = useSelector(
+    (state) => state.event,
+  );
 
   const [activeTab, setActiveTab] = useState("products");
   const [shopView, setShopView] = useState(() => initialFormState({}));
@@ -146,7 +154,9 @@ const MyShop = () => {
 
             {activeTab === "products" && (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {sellerProducts.length > 0 ? (
+                {isProductsLoading && sellerProducts.length === 0 ? (
+                  <ShopProductCardSkeleton count={6} />
+                ) : sellerProducts.length > 0 ? (
                   sellerProducts.map((product) => (
                     <ShopProductCard key={product._id} product={product} />
                   ))
@@ -163,7 +173,9 @@ const MyShop = () => {
 
             {activeTab === "events" && (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {eventItems.length > 0 ? (
+                {isEventsLoading && eventItems.length === 0 ? (
+                  <ShopEventCardSkeleton count={6} />
+                ) : eventItems.length > 0 ? (
                   eventItems.map((event) => (
                     <ShopEventCard key={event._id} event={event} />
                   ))

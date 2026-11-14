@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import EventCard from "../components/home/EventCard";
+import { EventCardSkeleton } from "../components/common/skeletons";
 import { getAllEvents } from "../services/store/actions/event";
 
 const Events = () => {
@@ -37,8 +38,8 @@ const Events = () => {
         </div>
 
         {isLoading && eventProducts.length === 0 ? (
-          <div className="max-w-6xl mx-auto rounded-2xl border border-slate-200 bg-white/90 p-8 text-center text-slate-500 shadow-sm">
-            Loading event products...
+          <div className="mx-auto flex max-w-6xl flex-col gap-6">
+            <EventCardSkeleton variant="hero" count={3} />
           </div>
         ) : eventProducts.length > 0 ? (
           <div className="mx-auto flex max-w-6xl flex-col gap-6">

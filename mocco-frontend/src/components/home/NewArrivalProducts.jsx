@@ -10,9 +10,26 @@ const NewArrivalProducts = ({ productLoading, newArrivalProducts }) => {
 
   if (productLoading) {
     return (
-      <div className="w-full max-w-7xl px-5 py-8 mx-auto">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
-          Loading new arrival products...
+      <div className="w-full max-w-7xl px-5 py-8 mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="h-8 w-56 bg-slate-200 rounded-lg animate-pulse" />
+          <div className="h-8 w-24 bg-slate-200 rounded-full animate-pulse hidden md:block" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Large Item Skeleton */}
+          <div className="h-96 w-full rounded-2xl bg-slate-100 animate-pulse relative overflow-hidden flex items-end p-6">
+            <div className="h-24 w-3/4 bg-white/80 rounded-xl animate-pulse p-4 space-y-2" />
+          </div>
+          {/* Right Column Skeletons */}
+          <div className="flex flex-col gap-6">
+            <div className="h-44 w-full rounded-2xl bg-slate-100 animate-pulse p-4 flex items-end">
+              <div className="h-16 w-2/3 bg-white/80 rounded-xl" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="h-44 rounded-2xl bg-slate-100 animate-pulse" />
+              <div className="h-44 rounded-2xl bg-slate-100 animate-pulse" />
+            </div>
+          </div>
         </div>
       </div>
     );
