@@ -6,6 +6,8 @@ import ShopDashboardSidebar from "../components/shopDashboard/ShopDashboardSideb
 import { dashboardItems } from "../components/shopDashboard/constants/dashboardItems";
 import { loadSeller } from "../services/store/actions/seller";
 
+import toast from "react-hot-toast";
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const SellerDashboardLayout = () => {
@@ -32,16 +34,16 @@ const SellerDashboardLayout = () => {
       });
 
       if (data?.success) {
-        window.alert("Logged out successfully.");
+        toast.success("Logged out successfully");
         dispatch(loadSeller());
-        navigate("/login", { replace: true });
+        navigate("/shop-login", { replace: true });
       }
     } catch (error) {
       const message =
         error?.response?.data?.message ||
         error?.message ||
         "Unable to logout right now.";
-      window.alert(message);
+      toast.error(message);
     }
   };
 
