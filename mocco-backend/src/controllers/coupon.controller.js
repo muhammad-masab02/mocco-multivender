@@ -121,9 +121,21 @@ const validateCoupon = catchAsyncErrors(async (req, res, next) => {
             return next(new ErrorHandler("Invalid coupon code", 404));
         }
 
-        const eligibleItems = cartItems.filter(
-            (item) => item?.productId?.shop?._id?.toString() === coupon?.shop?._id?.toString()
-        );
+        const couponShopId = (coupon?.shop?._id || coupon?.shop)?.toString();
+        const eligibleItems = cartItems.filter((item) => {
+            const itemShopId = (item?.productId?.shop?._id || item?.productId?.shop)?.toString();
+            return itemShopId && couponShopId && itemShopId === couponShopId;
+        });
+
+        if (eligibleItems.length === 0) {
+            const shopName = coupon?.shop?.name || "this seller";
+            return next(
+                new ErrorHandler(
+                    `This coupon is only valid for products from ${shopName}`,
+                    400
+                )
+            );
+        }
 
         const eligibleSubtotal = eligibleItems.reduce((total, item) => {
             const price = item?.productId?.discount_price || item?.productId?.price || 0;

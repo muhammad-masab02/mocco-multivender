@@ -100,9 +100,12 @@ const checkoutSlice = createSlice({
         const coupon = state.appliedCoupon;
 
         // products eligible for this coupon
+        const couponShopId = (coupon?.shop?._id || coupon?.shop)?.toString();
         const eligibleItems = cartItems.filter(
-          item =>
-            item?.productId?.shop?._id === coupon?.shop._id
+          item => {
+            const itemShopId = (item?.productId?.shop?._id || item?.productId?.shop)?.toString();
+            return itemShopId && couponShopId && itemShopId === couponShopId;
+          }
         );
 
         const eligibleSubtotal = eligibleItems.reduce((total, item) => {
