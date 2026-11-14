@@ -276,8 +276,6 @@ function App() {
           <Route path="/activate" element={<EmailActivation />} />
           <Route path="/activate/:token" element={<EmailActivation />} />
           <Route path="/seller/activate/:token" element={<EmailActivation />} />
-
-          <Route path="*" element={<NotFound />} />
         </Route>
 
         {/* admin routes */}
@@ -303,6 +301,9 @@ function App() {
           <Route index element={<ShopDashboard />} />
           <Route path="order/:orderId" element={<SellerOrderDetailPage />} />
         </Route>
+
+        {/* Catch-all 404 Route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

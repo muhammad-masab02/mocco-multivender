@@ -9,7 +9,18 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import { Menu, ChevronDown, ChevronRight, Store } from "lucide-react";
+import {
+  Menu,
+  ChevronDown,
+  ChevronRight,
+  Store,
+  ShieldAlert,
+  Shield,
+  LayoutDashboard,
+  Sparkles,
+  User,
+  BadgeCheck,
+} from "lucide-react";
 import { navItems, categoriesData } from "../../static/data.jsx";
 import { loadUser } from "../../services/store/actions/user.js";
 import { getAllEvents } from "../../services/store/actions/event.js";
@@ -33,6 +44,9 @@ const Header = () => {
   );
   const { ids: wishlistIds } = useSelector((state) => state.wishlist);
   const { cartItems } = useSelector((state) => state.cart);
+
+  const isAdmin = isUserAuthenticated && String(user?.role || "").toLowerCase() === "admin";
+  const isSeller = isSellerAuthenticated && Boolean(seller?._id);
 
   const cartTotalQuantity =
     cartItems?.reduce((acc, item) => acc + item.quantity, 0) || 0;
@@ -151,22 +165,34 @@ const Header = () => {
             <GlobalSearch isScrolled={isScrolled} />
           </div>
 
-          {/* Right: Open Your Shop Action Button */}
-          <button
-            onClick={() =>
-              navigate(
-                isSellerAuthenticated && seller?._id
-                  ? `/shop/${seller._id}`
-                  : "/shop-create",
-              )
-            }
-            className="hidden md:flex items-center gap-2.5 px-4 sm:px-5 py-2.5 rounded-full bg-neutral-900 hover:bg-red-600 text-white text-xs sm:text-sm font-semibold tracking-wide uppercase transition-all duration-200 shadow-sm cursor-pointer whitespace-nowrap shrink-0 group"
-          >
-            <span className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-white text-xs group-hover:translate-x-0.5 transition-transform">
-              ›
-            </span>
-            <span>{isSellerAuthenticated ? "My Shop" : "Open Your Shop"}</span>
-          </button>
+          {/* Right: Dynamic Role Action Button */}
+          {isAdmin ? (
+            <button
+              onClick={() => navigate("/admin")}
+              className="hidden md:flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md shadow-red-600/25 cursor-pointer whitespace-nowrap shrink-0 group hover:-translate-y-0.5"
+            >
+              <ShieldAlert className="w-4 h-4 text-white" />
+              <span>Admin Portal</span>
+            </button>
+          ) : isSeller ? (
+            <button
+              onClick={() => navigate("/shop-dashboard")}
+              className="hidden md:flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-sm cursor-pointer whitespace-nowrap shrink-0 group border border-slate-700 hover:-translate-y-0.5"
+            >
+              <LayoutDashboard className="w-4 h-4 text-emerald-400" />
+              <span>Seller Dashboard</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate("/shop-create")}
+              className="hidden md:flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full bg-neutral-900 hover:bg-red-600 text-white text-xs sm:text-sm font-semibold tracking-wide uppercase transition-all duration-200 shadow-sm cursor-pointer whitespace-nowrap shrink-0 group hover:-translate-y-0.5"
+            >
+              <span className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-white text-xs group-hover:translate-x-0.5 transition-transform">
+                ›
+              </span>
+              <span>Become a Seller</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -282,59 +308,156 @@ const Header = () => {
               <div className="relative" ref={profileDropdownRef}>
                 <button
                   onClick={() => setIsProfileOpen((prev) => !prev)}
-                  className="p-1 rounded-full text-white hover:ring-2 hover:ring-red-500 transition-all cursor-pointer"
+                  className="relative p-1 rounded-full text-white transition-all cursor-pointer group"
                   title="Account Menu"
                 >
-                  {user?.avatar?.url ? (
-                    <img
-                      src={getImageUrl(
-                        user.avatar.url,
-                        "https://dummyimage.com/100",
-                      )}
-                      alt="User"
-                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-white/20"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/15 flex items-center justify-center text-white">
-                      <PersonOutlineIcon fontSize="small" />
-                    </div>
-                  )}
+                  <div className={`rounded-full p-0.5 transition-all ${
+                    isAdmin
+                      ? "ring-2 ring-red-500 ring-offset-2 ring-offset-slate-900"
+                      : isSeller
+                      ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-slate-900"
+                      : "hover:ring-2 hover:ring-white/40"
+                  }`}>
+                    {user?.avatar?.url ? (
+                      <img
+                        src={getImageUrl(
+                          user.avatar.url,
+                          "https://dummyimage.com/100",
+                        )}
+                        alt="User"
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/15 flex items-center justify-center text-white">
+                        <PersonOutlineIcon fontSize="small" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Corner Role Badge Indicator on Avatar */}
+                  {isAdmin ? (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center shadow-xs border border-slate-900">
+                      <Shield className="w-2.5 h-2.5" />
+                    </span>
+                  ) : isSeller ? (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs border border-slate-900">
+                      <Store className="w-2.5 h-2.5" />
+                    </span>
+                  ) : null}
                 </button>
 
                 {isProfileOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 text-neutral-800">
-                    <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-xs text-neutral-400">Signed in as</p>
-                      <p className="text-sm font-semibold truncate text-neutral-900">
-                        {user?.name || user?.email}
-                      </p>
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-3xl shadow-2xl border border-slate-200/80 py-2.5 z-50 text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+                    {/* User Profile Card Header with Role Badge */}
+                    <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
+                      <div className="relative shrink-0">
+                        {user?.avatar?.url ? (
+                          <img
+                            src={getImageUrl(user.avatar.url, "https://dummyimage.com/100")}
+                            alt={user.name}
+                            className="w-10 h-10 rounded-full object-cover border border-slate-200"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold">
+                            {user?.name?.[0]?.toUpperCase() || "U"}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <p className="text-sm font-bold truncate text-slate-900">
+                            {user?.name || "Customer"}
+                          </p>
+                        </div>
+                        <p className="text-xs text-slate-400 truncate mb-1">
+                          {user?.email}
+                        </p>
+                        {/* Distinct Role Badges */}
+                        {isAdmin ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-50 text-red-700 border border-red-200">
+                            <ShieldAlert className="w-3 h-3 text-red-600" />
+                            <span>Super Admin</span>
+                          </span>
+                        ) : isSeller ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <BadgeCheck className="w-3 h-3 text-emerald-600" />
+                            <span>Verified Seller</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
+                            <User className="w-3 h-3 text-slate-500" />
+                            <span>Shopper</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <Link
-                      to="/my-profile"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-neutral-700 hover:bg-red-50 hover:text-red-600 transition"
-                    >
-                      <PersonOutlineIcon fontSize="small" />
-                      My Profile
-                    </Link>
-                    <Link
-                      to="/my-profile?tab=orders"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-neutral-700 hover:bg-red-50 hover:text-red-600 transition"
-                    >
-                      <ShoppingCartIcon fontSize="small" />
-                      My Orders
-                    </Link>
-                    {isSellerAuthenticated && seller?._id && (
-                      <Link
-                        to={`/shop/${seller._id}`}
-                        onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-neutral-700 hover:bg-red-50 hover:text-red-600 transition"
-                      >
-                        <Store size={16} />
-                        My Shop
-                      </Link>
+
+                    {/* Role Specific Shortcuts */}
+                    {isAdmin && (
+                      <div className="px-2 py-1.5 border-b border-slate-100">
+                        <Link
+                          to="/admin"
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold text-red-700 bg-red-50/70 hover:bg-red-100/70 transition group"
+                        >
+                          <span className="flex items-center gap-2">
+                            <ShieldAlert size={15} className="text-red-600" />
+                            <span>Admin Dashboard</span>
+                          </span>
+                          <span className="text-[10px] bg-red-600 text-white font-black px-1.5 py-0.2 rounded-md">
+                            ADMIN
+                          </span>
+                        </Link>
+                      </div>
                     )}
+
+                    {isSeller && (
+                      <div className="px-2 py-1.5 border-b border-slate-100 space-y-1">
+                        <Link
+                          to="/shop-dashboard"
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold text-emerald-800 bg-emerald-50/70 hover:bg-emerald-100/70 transition"
+                        >
+                          <span className="flex items-center gap-2">
+                            <LayoutDashboard size={15} className="text-emerald-600" />
+                            <span>Seller Dashboard</span>
+                          </span>
+                          <span className="text-[10px] bg-emerald-600 text-white font-black px-1.5 py-0.2 rounded-md">
+                            SHOP
+                          </span>
+                        </Link>
+                        {seller?._id && (
+                          <Link
+                            to={`/shop/${seller._id}`}
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/50 transition"
+                          >
+                            <Store size={14} className="text-slate-400" />
+                            <span>View Storefront</span>
+                          </Link>
+                        )}
+                      </div>
+                    )}
+
+                    {/* General User Links */}
+                    <div className="px-2 py-1.5 space-y-0.5">
+                      <Link
+                        to="/my-profile"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition"
+                      >
+                        <PersonOutlineIcon fontSize="small" />
+                        My Profile
+                      </Link>
+                      <Link
+                        to="/my-profile?tab=orders"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition"
+                      >
+                        <ShoppingCartIcon fontSize="small" />
+                        My Orders
+                      </Link>
+                    </div>
                     <button
                       onClick={() => {
                         setIsProfileOpen(false);
@@ -456,19 +579,62 @@ const Header = () => {
 
           {/* Bottom Actions */}
           <div className="border-t border-gray-200 px-4 py-4 space-y-3">
-            <button
-              onClick={() => {
-                handleMenuClose();
-                navigate(
-                  isSellerAuthenticated && seller?._id
-                    ? `/shop/${seller._id}`
-                    : "/shop-create",
-                );
-              }}
-              className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-red-600 text-white text-xs font-bold uppercase tracking-wide transition shadow-sm"
-            >
-              {isSellerAuthenticated ? "My Shop Dashboard" : "Become a Seller"}
-            </button>
+            {/* Logged in User Pill */}
+            {isUserAuthenticated && (
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-700 text-xs shrink-0 overflow-hidden">
+                  {user?.avatar?.url ? (
+                    <img src={getImageUrl(user.avatar.url, "https://dummyimage.com/100")} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    user?.name?.[0]?.toUpperCase() || "U"
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 truncate">{user?.name || "User"}</p>
+                  <p className="text-[10px] text-slate-400 truncate">{user?.email}</p>
+                </div>
+                {isAdmin ? (
+                  <span className="text-[9px] font-black uppercase tracking-wider bg-red-100 text-red-700 px-1.5 py-0.5 rounded-md">ADMIN</span>
+                ) : isSeller ? (
+                  <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-md">SELLER</span>
+                ) : null}
+              </div>
+            )}
+
+            {/* Dynamic Role Action Button */}
+            {isAdmin ? (
+              <button
+                onClick={() => {
+                  handleMenuClose();
+                  navigate("/admin");
+                }}
+                className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-red-600 to-rose-700 text-white text-xs font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2"
+              >
+                <ShieldAlert className="w-4 h-4" />
+                <span>Admin Portal</span>
+              </button>
+            ) : isSeller ? (
+              <button
+                onClick={() => {
+                  handleMenuClose();
+                  navigate("/shop-dashboard");
+                }}
+                className="w-full py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2"
+              >
+                <LayoutDashboard className="w-4 h-4 text-emerald-400" />
+                <span>Seller Dashboard</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  handleMenuClose();
+                  navigate("/shop-create");
+                }}
+                className="w-full py-2.5 rounded-2xl bg-neutral-900 hover:bg-red-600 text-white text-xs font-bold uppercase tracking-wide transition shadow-sm"
+              >
+                Become a Seller
+              </button>
+            )}
 
             {isUserAuthenticated && (
               <button
@@ -476,7 +642,7 @@ const Header = () => {
                   handleMenuClose();
                   handleLogout();
                 }}
-                className="w-full py-2 rounded-xl bg-gray-100 hover:bg-red-50 text-neutral-700 hover:text-red-600 text-xs font-semibold transition flex items-center justify-center gap-2"
+                className="w-full py-2 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-600 text-xs font-semibold transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LogoutRoundedIcon fontSize="small" />
                 Logout

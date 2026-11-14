@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
+import AppLoader from "../layouts/AppLoader";
 
 export function AdminProtectedRoute({ children }) {
   const {
@@ -8,14 +9,17 @@ export function AdminProtectedRoute({ children }) {
     isUserAuthenticated,
   } = useSelector((state) => state.user);
 
-  if (!isUserLoading) {
-    if (!isUserAuthenticated) {
-      return <Navigate to="/login" replace />;
-    }
+  if (isUserLoading) {
+    return <AppLoader />;
+  }
 
-    if (user?.role !== "admin") {
-      return <Navigate to="/" replace />;
-    }
+  if (!isUserAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const role = String(user?.role || "").toLowerCase();
+  if (role !== "admin") {
+    return <Navigate to="/" replace />;
   }
 
   return children;
