@@ -1,29 +1,39 @@
 import { useState } from "react";
-import CustomButton from "../components/common/CustomButton";
-import CustomFormInput from "../components/common/inputs/CustomFormInput";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useDispatch } from "react-redux";
+import toast from "react-hot-toast";
 import { loadUser } from "../services/store/actions/user";
 import {
   getGuestWishlist,
   mergeWishlist,
 } from "../services/store/actions/wishlist";
 import { getGuestCart, mergeCart } from "../services/store/actions/cart";
-import LoginIcon from "@mui/icons-material/Login";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ShoppingBag,
+  ShieldCheck,
+  Sparkles,
+  Store,
+  ShieldAlert,
+} from "lucide-react";
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const SignIn = () => {
   const navigate = useNavigate();
-
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
   const dispatch = useDispatch();
-  // const { loading, isUserAuthenticated } = useSelector((state) => state.user);
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -36,11 +46,12 @@ const SignIn = () => {
     e.preventDefault();
 
     if (!formData.email || !formData.password) {
-      console.error("Please fill in all fields");
+      toast.error("Please fill in both email and password.");
       return;
     }
+
+    setIsLoading(true);
     try {
-      // Make API call to login user using axios
       const { data } = await axios.post(`${backendUrl}/user/login`, formData, {
         withCredentials: true,
         headers: {
@@ -49,14 +60,14 @@ const SignIn = () => {
       });
 
       if (data?.success) {
-        dispatch(loadUser());
+        toast.success("Welcome back to Mocco Mart!");
+        await dispatch(loadUser());
 
         // --- MERGE WISHLIST ---
         const guestIds = getGuestWishlist();
-        if (guestIds.length > 0) {
+        if (guestIds && guestIds.length > 0) {
           try {
             await dispatch(mergeWishlist(guestIds));
-            // dispatch(clearGuestWishlistAction()); // Clear local storage after successful merge
           } catch (mergeErr) {
             console.error("Failed to merge guest wishlist", mergeErr);
           }
@@ -64,129 +75,226 @@ const SignIn = () => {
 
         // --- MERGE CART ---
         const guestCart = getGuestCart();
-        if (guestCart.length > 0) {
+        if (guestCart && guestCart.length > 0) {
           try {
             const mappedCart = guestCart.map((item) => ({
-              productId: item.productId._id,
+              productId: item.productId?._id || item.productId,
               quantity: item.quantity,
             }));
             await dispatch(mergeCart(mappedCart));
-            // dispatch(clearGuestCartAction());
           } catch (mergeErr) {
             console.error("Failed to merge guest cart", mergeErr);
           }
         }
 
-        // Reset form
-        setFormData({
-          email: "",
-          password: "",
-        });
-
+        setFormData({ email: "", password: "" });
         navigate("/");
-        // window.location.reload(true); // Reload the page to update the UI with the new authentication state
       } else {
-        console.error("Login failed: ", data);
-        alert(data.message || "Login failed. Please try again.");
+        toast.error(data?.message || "Login failed. Please check credentials.");
       }
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || "An error occurred");
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "An unexpected error occurred during login.";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <section className="w-full min-h-[78vh] grid grid-cols-1 lg:grid-cols-2 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_16px_60px_rgba(15,23,42,0.08)]">
-      <div className="relative hidden lg:flex items-center justify-center px-8 py-10 bg-linear-to-br from-red-700 via-red-600 to-orange-500 text-white">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_20%_20%,#fff_0,transparent_40%),radial-gradient(circle_at_80%_80%,#fff_0,transparent_40%)]" />
-        <div className="relative max-w-md">
-          <p className="text-xs uppercase tracking-[0.18em] font-semibold mb-3 text-red-100">
-            Welcome Back
-          </p>
-          <h1 className="text-4xl font-bold leading-tight mb-4">
-            Sign in and continue your shopping journey.
-          </h1>
-          <p className="text-base text-red-50/90">
-            Access your saved cart, orders, and profile details in a few
-            seconds.
-          </p>
-          <div className="mt-8 inline-flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/15 border border-white/30 backdrop-blur-sm">
-            <LoginIcon fontSize="small" />
-            <span className="text-sm font-medium">
-              Protected account access
-            </span>
+    <section className="w-full min-h-[82vh] grid grid-cols-1 lg:grid-cols-12 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-200/50 my-4 sm:my-6">
+      {/* Left Brand Showcase Banner */}
+      <div className="relative hidden lg:flex lg:col-span-5 flex-col justify-between p-10 bg-linear-to-br from-red-600 via-rose-600 to-red-800 text-white overflow-hidden">
+        {/* Decorative Backdrop Glows */}
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-orange-500/20 blur-3xl pointer-events-none" />
+
+        {/* Top Tagline */}
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs font-bold uppercase tracking-wider text-red-50 mb-6">
+            <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+            <span>Shopper Access</span>
           </div>
+
+          <h1 className="text-3xl xl:text-4xl font-black leading-tight tracking-tight">
+            Discover Millions of Products from Trusted Sellers.
+          </h1>
+          <p className="mt-3 text-red-100/90 text-sm leading-relaxed">
+            Sign in to track orders, manage addresses, access your saved
+            wishlist, and checkout in seconds.
+          </p>
+        </div>
+
+        {/* Floating Perks Card */}
+        <div className="relative z-10 space-y-3 my-8">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-xs">
+            <div className="p-2 rounded-xl bg-white/20 text-white shrink-0">
+              <ShoppingBag className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-bold">Fast & Insured Delivery</p>
+              <p className="text-red-100/80 text-[11px]">
+                Nationwide express delivery to your doorstep.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-xs">
+            <div className="p-2 rounded-xl bg-white/20 text-white shrink-0">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-bold">100% Buyer Protection</p>
+              <p className="text-red-100/80 text-[11px]">
+                Safe payments & hassle-free 7-day returns.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Social Proof */}
+        <div className="relative z-10 pt-4 border-t border-white/15 flex items-center justify-between text-xs text-red-100/80">
+          <span>Trusted by 50,000+ customers</span>
+          <span className="font-bold text-white">Mocco Mart v2.0</span>
         </div>
       </div>
 
-      <div className="px-4 sm:px-8 py-8 sm:py-10 flex items-center justify-center bg-white">
-        <div className="w-full max-w-xl">
-          <div className="mb-7">
-            <p className="text-xs uppercase tracking-[0.18em] font-semibold text-red-500 mb-2">
-              Customer Account
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Login to Mocco Mart
+      {/* Right Form Card */}
+      <div className="lg:col-span-7 p-6 sm:p-10 xl:p-14 flex items-center justify-center bg-white">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wider mb-2">
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>Customer Portal</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Sign In to Your Account
             </h2>
-            <p className="text-sm sm:text-base text-gray-500 mt-2">
-              Enter your credentials to continue.
+            <p className="text-sm text-slate-500 mt-1.5">
+              Welcome back! Please enter your details to continue.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 text-black">
-            <CustomFormInput
-              label="Email"
-              type="email"
-              placeholder="Enter your email"
-              name="email"
-              autoComplete="email"
-              icon={false}
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-            <CustomFormInput
-              label="Password"
-              type="password"
-              placeholder="Enter your password"
-              name="password"
-              autoComplete="current-password"
-              icon={false}
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-
-            <div className="pt-2">
-              <CustomButton buttonText="Login" type="submit" variant="danger" />
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email Field */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="e.g. alex@example.com"
+                  autoComplete="email"
+                  required
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 text-sm font-medium outline-none focus:bg-white focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all placeholder:text-slate-400"
+                />
+              </div>
             </div>
 
-            <CustomButton
-              buttonText="Forget Password?"
-              type="button"
-              variant="textDanger"
-              onClick={() => alert("Forget Password successfully")}
-            />
+            {/* Password Field */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    toast("Password reset instructions will be sent via email.")
+                  }
+                  className="text-xs font-semibold text-red-600 hover:text-red-700 transition cursor-pointer"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  required
+                  className="w-full pl-10 pr-11 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 text-sm font-medium outline-none focus:bg-white focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all placeholder:text-slate-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
 
-            <p className="text-center text-sm text-gray-600 pt-2">
-              Don&apos;t have an account?{" "}
-              <Link
-                to="/signup"
-                className="font-semibold text-red-600 hover:text-red-700"
+            {/* Submit Button */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3.5 px-6 rounded-2xl bg-linear-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-sm shadow-md shadow-red-500/20 hover:shadow-lg hover:shadow-red-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Sign Up
-              </Link>
-            </p>
+                {isLoading ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <span>Signing In...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </div>
 
-            <p className="text-center text-sm text-gray-600">
-              Want to sell on Mocco Mart?{" "}
-              <Link
-                to="/shop-create"
-                className="font-semibold text-red-600 hover:text-red-700"
-              >
-                Create Seller Account
-              </Link>
-            </p>
+            {/* Secondary Navigation */}
+            <div className="pt-4 text-center space-y-3">
+              <p className="text-xs text-slate-500">
+                Don&apos;t have a customer account?{" "}
+                <Link
+                  to="/signup"
+                  className="font-bold text-red-600 hover:text-red-700 underline underline-offset-2"
+                >
+                  Sign Up Here
+                </Link>
+              </p>
+
+              <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-slate-500">
+                <Link
+                  to="/shop-login"
+                  className="inline-flex items-center gap-1.5 font-bold text-emerald-600 hover:text-emerald-700"
+                >
+                  <Store className="w-3.5 h-3.5" />
+                  <span>Merchant / Seller Login</span>
+                </Link>
+
+                <span className="hidden sm:inline text-slate-300">•</span>
+
+                <Link
+                  to="/admin/login"
+                  className="inline-flex items-center gap-1.5 font-bold text-slate-600 hover:text-red-600 transition"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5 text-red-500" />
+                  <span>Super Admin Portal</span>
+                </Link>
+              </div>
+            </div>
           </form>
         </div>
       </div>

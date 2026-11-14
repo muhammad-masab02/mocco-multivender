@@ -26,9 +26,9 @@ const AdminDashboardLayout = () => {
         withCredentials: true,
       });
       if (data?.success) {
-        toast.success("Logged out successfully");
+        toast.success("Admin session terminated safely.");
         dispatch(loadUser());
-        navigate("/login", { replace: true });
+        navigate("/admin/login", { replace: true });
       }
     } catch (error) {
       const message =

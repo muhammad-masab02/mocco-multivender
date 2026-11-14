@@ -636,7 +636,7 @@ const Header = () => {
               </button>
             )}
 
-            {isUserAuthenticated && (
+            {isUserAuthenticated ? (
               <button
                 onClick={() => {
                   handleMenuClose();
@@ -647,6 +647,36 @@ const Header = () => {
                 <LogoutRoundedIcon fontSize="small" />
                 Logout
               </button>
+            ) : (
+              <div className="space-y-2 pt-1">
+                <button
+                  onClick={() => {
+                    handleMenuClose();
+                    navigate("/login");
+                  }}
+                  className="w-full py-2.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <PersonOutlineIcon fontSize="small" />
+                  <span>Customer Sign In</span>
+                </button>
+                <div className="flex items-center justify-center gap-3 pt-1 text-[11px] text-slate-500">
+                  <Link
+                    to="/shop-login"
+                    onClick={handleMenuClose}
+                    className="hover:text-emerald-600 font-semibold transition"
+                  >
+                    Merchant Login
+                  </Link>
+                  <span>•</span>
+                  <Link
+                    to="/admin/login"
+                    onClick={handleMenuClose}
+                    className="hover:text-red-600 font-semibold transition"
+                  >
+                    Admin Gateway
+                  </Link>
+                </div>
+              </div>
             )}
           </div>
         </div>

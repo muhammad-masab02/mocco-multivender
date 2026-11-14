@@ -39,6 +39,7 @@ import EmailActivation from "./pages/EmailActivation.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import AdminDashboardLayout from "./layouts/AdminDashboardLayout.jsx";
+import AdminLogin from "./pages/AdminLogin.jsx";
 import Home from "./pages/Home.jsx";
 import Contact from "./pages/Contact.jsx";
 import ShopDashboard from "./pages/ShopDashboard.jsx";
@@ -279,6 +280,8 @@ function App() {
         </Route>
 
         {/* admin routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
         <Route
           path="/admin"
           element={

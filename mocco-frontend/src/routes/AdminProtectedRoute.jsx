@@ -14,12 +14,12 @@ export function AdminProtectedRoute({ children }) {
   }
 
   if (!isUserAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   const role = String(user?.role || "").toLowerCase();
   if (role !== "admin") {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   return children;
