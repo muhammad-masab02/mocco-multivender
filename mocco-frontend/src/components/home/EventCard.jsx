@@ -1,13 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import CustomButton from "../common/CustomButton";
 import { getImageUrl } from "../../utils/imageUrl.js";
+import {
+  Zap,
+  Clock,
+  Flame,
+  ArrowRight,
+  Eye,
+  Store,
+  Sparkles,
+  ShoppingBag,
+} from "lucide-react";
 
 const formatMoney = (value) => {
   const numberValue = Number(value || 0);
-  if (!Number.isFinite(numberValue)) return "$0";
-
-  return `$${numberValue.toLocaleString()}`;
+  if (!Number.isFinite(numberValue)) return "$0.00";
+  return `$${numberValue.toFixed(2)}`;
 };
 
 const getCountdownParts = (endDate, nowTime = Date.now()) => {
@@ -49,13 +57,20 @@ const getCardData = (eventProduct = {}) => {
 
   const imageUrl = getImageUrl(
     rawImg,
-    "https://dummyimage.com/600x600/f3f4f6/9ca3af.png&text=Event",
+    "https://dummyimage.com/600x600/f1f5f9/94a3b8.png&text=Event",
   );
 
+  const secondaryRaw =
+    eventProduct?.images?.[1]?.url ||
+    eventProduct?.image_Url?.[1]?.url ||
+    eventProduct?.images?.[1];
+  const secondaryImage = secondaryRaw ? getImageUrl(secondaryRaw) : null;
+
   const title = eventProduct?.name || "Event Product";
-  const category = eventProduct?.category || "Others";
+  const category = eventProduct?.category || "Special Offer";
   const shortDescription =
-    eventProduct?.description?.slice(0, 130) || "Limited-time event product";
+    eventProduct?.description?.slice(0, 140) ||
+    "Limited-time promotional event with exclusive savings and verified stock.";
 
   const originalPrice = Number(eventProduct?.price || 0);
   const discountPrice = Number(eventProduct?.discount_price || originalPrice);
@@ -63,7 +78,7 @@ const getCardData = (eventProduct = {}) => {
   const sold = Number(eventProduct?.total_sell || 0);
   const totalUnits = stock + sold;
   const soldPercent =
-    totalUnits > 0 ? Math.min(100, (sold / totalUnits) * 100) : 0;
+    totalUnits > 0 ? Math.min(100, Math.round((sold / totalUnits) * 100)) : 0;
   const discountPercent =
     originalPrice > 0
       ? Math.max(
@@ -74,6 +89,7 @@ const getCardData = (eventProduct = {}) => {
 
   return {
     imageUrl,
+    secondaryImage,
     title,
     category,
     shortDescription,
@@ -98,6 +114,7 @@ const EventCard = ({
 
   const {
     imageUrl,
+    secondaryImage,
     title,
     category,
     shortDescription,
@@ -131,230 +148,346 @@ const EventCard = ({
     };
   }, []);
 
-  const handleSeeDetails = () => {
+  const handleSeeDetails = (e) => {
+    e?.stopPropagation();
     if (!productId) return;
     navigate(`/product-detail/${productId}`);
   };
 
-  const handleBuyNow = () => {
-    navigate("/checkout");
+  const handleBuyNow = (e) => {
+    e?.stopPropagation();
+    if (productId) {
+      navigate(`/product-detail/${productId}`);
+    } else {
+      navigate("/checkout");
+    }
   };
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // COMPACT VARIANT (Grid event card used in secondary displays)
+  // ───────────────────────────────────────────────────────────────────────────
   if (variant === "compact") {
     return (
       <article
-        className={`group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${className}`}
+        onClick={handleSeeDetails}
+        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white hover:border-red-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] hover:shadow-[0_16px_36px_rgba(239,68,68,0.12)] transition-all duration-300 hover:-translate-y-1.5 cursor-pointer select-none ${className}`}
       >
-        <div className="absolute left-3 top-3 z-10 rounded-full bg-red-500 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow">
-          {discountPercent > 0 ? `-${discountPercent}%` : "Offer"}
-        </div>
-
-        <button
-          type="button"
-          onClick={handleSeeDetails}
-          className="w-full text-left"
-        >
-          <div className="h-48 w-full overflow-hidden bg-slate-100">
+        {/* Media Container */}
+        <div className="relative aspect-square sm:aspect-[4/3] w-full overflow-hidden bg-gradient-to-b from-slate-50 via-slate-100/60 to-slate-100/90 flex items-center justify-center">
+          <img
+            src={imageUrl}
+            alt={title}
+            loading="lazy"
+            className={`h-full w-full object-cover object-center transition-all duration-500 ease-out ${
+              secondaryImage
+                ? "group-hover:opacity-0 group-hover:scale-105"
+                : "group-hover:scale-108"
+            }`}
+          />
+          {secondaryImage && (
             <img
-              src={imageUrl}
+              src={secondaryImage}
               alt={title}
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+              loading="lazy"
+              className="absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-all duration-500 ease-out group-hover:opacity-100 group-hover:scale-105"
             />
+          )}
+
+          {/* Top Left Badges: Live beacon + Discount */}
+          <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 items-start">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/85 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white shadow-sm uppercase tracking-wider">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              Live
+            </span>
+
+            {discountPercent > 0 && (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-rose-500 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-md shadow-red-500/20">
+                <Sparkles size={11} className="fill-white" />
+                -{discountPercent}%
+              </span>
+            )}
           </div>
 
-          <div className="space-y-3 p-4">
-            <div className="flex items-center justify-between gap-2">
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                {category}
+          {/* Top Right Quick View */}
+          <button
+            type="button"
+            onClick={handleSeeDetails}
+            className="absolute top-3 right-3 z-20 h-8 w-8 rounded-full bg-white/90 hover:bg-white text-slate-700 hover:text-red-600 border border-white/60 shadow-md backdrop-blur-md flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
+            title="View details"
+          >
+            <Eye size={15} />
+          </button>
+
+          {/* Bottom Floating Countdown Ticker */}
+          <div className="absolute inset-x-3 bottom-3 z-10">
+            <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md text-white text-[11px] font-semibold shadow-lg">
+              <span className="flex items-center gap-1 text-red-400 text-[10px] font-bold uppercase tracking-wider">
+                <Clock size={12} />
+                Time Left
+              </span>
+              <span className="font-mono text-xs font-bold tracking-tight text-white">
+                {countdown?.isExpired
+                  ? "Ended"
+                  : countdownReady
+                    ? `${countdown.days}d ${formatCountdownValue(
+                        countdown.hours,
+                      )}h ${formatCountdownValue(countdown.minutes)}m`
+                    : "--:--"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div className="flex flex-1 flex-col justify-between p-3.5 sm:p-4 space-y-3">
+          <div className="space-y-1.5">
+            {/* Category tag */}
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 truncate">
+              {category}
+            </span>
+
+            {/* Title */}
+            <h3
+              className="font-semibold text-slate-800 group-hover:text-red-600 transition-colors line-clamp-2 text-xs sm:text-sm leading-snug min-h-[2.4rem]"
+              title={title}
+            >
+              {title}
+            </h3>
+          </div>
+
+          {/* Pricing & Claim Bar */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            {/* Price Row */}
+            <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-base sm:text-lg font-extrabold text-slate-900">
+                  {formatMoney(discountPrice)}
+                </span>
+                {originalPrice > discountPrice && (
+                  <span className="text-xs text-slate-400 line-through">
+                    {formatMoney(originalPrice)}
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                {soldPercent}% claimed
               </span>
             </div>
 
-            <h3 className="text-sm font-semibold text-slate-900  line-clamp-2 leading-6 min-h-12 overflow-hidden">
-              {title}
-            </h3>
-
-            <div className="rounded-xl border border-red-100 bg-red-50 px-3 py-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-red-600">
-                Time left
-              </p>
-              <div className="mt-2 grid grid-cols-4 gap-2 text-center">
-                {[
-                  { label: "Days", value: countdown?.days ?? "--" },
-                  { label: "Hours", value: countdown?.hours ?? "--" },
-                  { label: "Mins", value: countdown?.minutes ?? "--" },
-                  { label: "Secs", value: countdown?.seconds ?? "--" },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-lg bg-white px-2 py-2 shadow-sm"
-                  >
-                    <div className="text-sm font-bold text-slate-900">
-                      {typeof item.value === "number"
-                        ? formatCountdownValue(item.value)
-                        : item.value}
-                    </div>
-                    <div className="text-[10px] uppercase tracking-wide text-slate-500">
-                      {item.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-2 text-center text-[11px] text-slate-500">
-                {countdown?.isExpired
-                  ? "Event ended"
-                  : countdownReady
-                    ? "Ends soon"
-                    : "Loading countdown"}
-              </p>
+            {/* Stock Progress Bar */}
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-red-500 to-rose-500 transition-all duration-500"
+                style={{ width: `${Math.max(8, soldPercent)}%` }}
+              />
             </div>
           </div>
-        </button>
+        </div>
       </article>
     );
   }
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // HERO VARIANT (Grand showcase banner used on Home and Events page)
+  // ───────────────────────────────────────────────────────────────────────────
+  const saveAmount = Math.max(0, originalPrice - discountPrice);
+
   return (
     <article
-      className={`overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/70 ${className}`}
+      className={`group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-red-500/10 transition-all duration-300 ${className}`}
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-        <div className="relative lg:col-span-4 bg-linear-to-b from-rose-50 to-white p-5 sm:p-6 lg:px-8 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r border-slate-200/80">
-          <span className="absolute top-3 left-5 rounded-full bg-red-500 text-white text-xs font-semibold px-3 py-1.5 shadow-sm">
-            {discountPercent > 0 ? `-${discountPercent}% OFF` : "Event Offer"}
-          </span>
-          <span
-            className={`absolute top-3 right-5 rounded-full text-xs font-semibold px-3 py-1.5 shadow-sm ${
-              isSoldOut
-                ? "bg-rose-100 text-rose-600"
-                : "bg-emerald-100 text-emerald-700"
-            }`}
-          >
-            {isSoldOut ? "Sold Out" : "Live"}
-          </span>
+        {/* ── Left Column: Media Showcase (5 cols) ─────────────────────────── */}
+        <div className="relative lg:col-span-5 bg-gradient-to-b from-slate-50 via-slate-100/60 to-slate-100/90 p-6 sm:p-8 flex flex-col justify-between items-center border-b lg:border-b-0 lg:border-r border-slate-100 overflow-hidden">
+          {/* Top Badges */}
+          <div className="w-full flex items-center justify-between z-10">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-white shadow-sm uppercase tracking-wider">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              {isSoldOut ? "Sold Out" : "Flash Event"}
+            </span>
 
-          <div className="w-full rounded-2xl bg-white border border-slate-200 p-5 shadow-sm">
+            {discountPercent > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-red-600 to-rose-500 px-3 py-1 text-xs font-bold text-white shadow-md shadow-red-500/20">
+                <Sparkles size={12} className="fill-white" />
+                -{discountPercent}% OFF
+              </span>
+            )}
+          </div>
+
+          {/* Product Image Frame */}
+          <div className="relative my-6 w-full aspect-square max-w-[340px] flex items-center justify-center">
             <img
               src={imageUrl}
               alt={title}
-              className="w-full h-48 object-contain"
+              loading="lazy"
+              className={`max-h-full max-w-full object-contain drop-shadow-md transition-all duration-500 ease-out ${
+                secondaryImage
+                  ? "group-hover:opacity-0 group-hover:scale-105"
+                  : "group-hover:scale-105"
+              }`}
             />
+            {secondaryImage && (
+              <img
+                src={secondaryImage}
+                alt={title}
+                loading="lazy"
+                className="absolute inset-0 m-auto max-h-full max-w-full object-contain opacity-0 drop-shadow-md transition-all duration-500 ease-out group-hover:opacity-100 group-hover:scale-105"
+              />
+            )}
           </div>
 
-          <div className="mt-3 w-full rounded-xl bg-white border border-slate-200 px-4 py-3">
-            <div className="flex items-center justify-between text-sm text-slate-600">
-              <p className="font-medium">
-                Sold: <span className="font-semibold">{sold}</span>
-              </p>
-              <p className="font-medium">
-                Stock: <span className="font-semibold">{stock}</span>
-              </p>
+          {/* Real-time Units Sold & Claimed Bar */}
+          <div className="w-full rounded-2xl bg-white/90 border border-slate-200/80 p-4 shadow-sm backdrop-blur-md space-y-2">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+              <span className="flex items-center gap-1.5">
+                <Flame size={14} className="text-orange-500 fill-orange-500" />
+                <span>{sold} claimed</span>
+              </span>
+              <span className="text-slate-500">
+                {stock > 0 ? `${stock} remaining` : "Out of stock"}
+              </span>
             </div>
 
-            <div className="mt-2 h-2 rounded-full bg-gray-200 overflow-hidden">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full bg-linear-to-r from-red-400 to-red-500"
-                style={{ width: `${soldPercent}%` }}
+                className="h-full rounded-full bg-gradient-to-r from-red-500 via-rose-500 to-amber-500 transition-all duration-700 ease-out"
+                style={{ width: `${Math.max(8, soldPercent)}%` }}
               />
             </div>
-
-            <p className="mt-2 text-center text-xs text-gray-500">
-              {sold} sold out of {totalUnits || sold}
-            </p>
           </div>
         </div>
 
-        <div className="lg:col-span-8 p-5 sm:p-6 lg:px-8 xl:px-9 flex flex-col">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <span className="inline-block w-fit text-xs px-3 py-1 rounded-full bg-sky-100 text-sky-700 font-medium">
-              {category}
-            </span>
-          </div>
-
-          <h2 className="mt-3 text-xl sm:text-2xl font-semibold text-slate-900 leading-tight">
-            {title}
-          </h2>
-
-          <p className="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">
-            {shortDescription}
-          </p>
-
-          <div className="mt-5 grid grid-cols-4 gap-3 sm:gap-4">
-            {[
-              { label: "Days", value: countdown?.days ?? "--" },
-              { label: "Hours", value: countdown?.hours ?? "--" },
-              { label: "Minutes", value: countdown?.minutes ?? "--" },
-              { label: "Seconds", value: countdown?.seconds ?? "--" },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-2xl border border-red-100 bg-white px-3 py-3 text-center shadow-sm"
-              >
-                <div className="text-lg sm:text-xl font-bold text-slate-900">
-                  {typeof item.value === "number"
-                    ? formatCountdownValue(item.value)
-                    : item.value}
-                </div>
-                <div className="mt-1 text-[10px] sm:text-xs uppercase tracking-[0.16em] text-slate-500">
-                  {item.label}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-3 text-xs sm:text-sm font-medium text-red-600"></p>
-
-          <div className="mt-5 rounded-xl bg-linear-to-r from-red-50 via-rose-50 to-orange-50 border border-red-100 px-4 py-3 text-center">
-            <span className="text-red-700 text-base font-semibold">
-              {countdown?.isExpired
-                ? "This event has ended"
-                : countdownReady
-                  ? "Hurry! Limited time left"
-                  : "Countdown loading"}
-            </span>
-          </div>
-
-          <div className="mt-6 flex items-end justify-between gap-3 flex-wrap">
-            <div className="flex items-end gap-2">
-              <span className="text-lg font-bold text-rose-600 leading-none">
-                {formatMoney(discountPrice || originalPrice)}
+        {/* ── Right Column: Info & Action Section (7 cols) ─────────────────── */}
+        <div className="lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
+          <div className="space-y-4">
+            {/* Category / Event Badge */}
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-100">
+                <Zap size={12} className="fill-red-600" />
+                {category}
               </span>
-              <span className="text-sm text-gray-400 line-through pb-1">
-                {formatMoney(originalPrice)}
-              </span>
-            </div>
-            <span className="text-green-600 text-sm sm:text-base font-semibold bg-green-50 border border-green-100 px-3 py-1 rounded-lg">
-              Save{" "}
-              {formatMoney(
-                Math.max(0, originalPrice - (discountPrice || originalPrice)),
+              {eventProduct?.shop?.name && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500">
+                  <Store size={12} className="text-slate-400" />
+                  {eventProduct.shop.name}
+                </span>
               )}
-            </span>
+            </div>
+
+            {/* Headline Title */}
+            <h2
+              onClick={handleSeeDetails}
+              className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug hover:text-red-600 transition-colors cursor-pointer"
+            >
+              {title}
+            </h2>
+
+            {/* Description */}
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-light line-clamp-3">
+              {shortDescription}
+            </p>
+
+            {/* ── Animated Countdown Clock ───────────────────────────────── */}
+            <div className="pt-2 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <Clock size={13} className="text-red-500" />
+                  {countdown?.isExpired
+                    ? "Event Expired"
+                    : "Limited Time Remaining"}
+                </span>
+                <span className="text-xs font-semibold text-red-600">
+                  {countdown?.isExpired ? "Deals ended" : "Ending soon"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2.5 sm:gap-3">
+                {[
+                  { label: "Days", value: countdown?.days ?? "--" },
+                  { label: "Hours", value: countdown?.hours ?? "--" },
+                  { label: "Minutes", value: countdown?.minutes ?? "--" },
+                  { label: "Seconds", value: countdown?.seconds ?? "--" },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-slate-50 border border-slate-200/80 shadow-xs group-hover:border-red-200 transition-colors"
+                  >
+                    <span className="font-mono text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none">
+                      {typeof item.value === "number"
+                        ? formatCountdownValue(item.value)
+                        : item.value}
+                    </span>
+                    <span className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Pricing Block ──────────────────────────────────────────── */}
+            <div className="pt-3 border-t border-slate-100 flex items-baseline justify-between flex-wrap gap-2">
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  {formatMoney(discountPrice)}
+                </span>
+                {originalPrice > discountPrice && (
+                  <span className="text-sm sm:text-base text-slate-400 line-through">
+                    {formatMoney(originalPrice)}
+                  </span>
+                )}
+              </div>
+
+              {saveAmount > 0 && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 shadow-xs">
+                  Save {formatMoney(saveAmount)}
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <CustomButton
-              buttonText="See details"
-              onClick={handleSeeDetails}
-              variant="outline"
-              className="rounded-xl text-sm sm:text-base"
-            />
-
-            <CustomButton
-              buttonText="Buy now"
+          {/* ── Action Buttons ─────────────────────────────────────────────── */}
+          <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
               onClick={handleBuyNow}
-              variant="dark"
               disabled={isSoldOut}
-              className="rounded-xl text-sm sm:text-base"
-            />
+              className={`w-full py-3.5 px-6 rounded-2xl text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all duration-200 cursor-pointer ${
+                isSoldOut
+                  ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                  : "bg-red-600 hover:bg-red-700 active:scale-98 text-white shadow-red-600/25 hover:shadow-red-600/35"
+              }`}
+            >
+              <ShoppingBag size={16} />
+              <span>{isSoldOut ? "Sold Out" : "Claim Deal Now"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSeeDetails}
+              className="w-full py-3.5 px-6 rounded-2xl text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-800 transition-all duration-200 cursor-pointer shadow-xs active:scale-98"
+            >
+              <span>View Product Details</span>
+              <ArrowRight size={15} />
+            </button>
           </div>
 
           {showMoreCta && (
-            <div className="flex justify-end items-center gap-4 mt-8">
-              <CustomButton
-                buttonText={"See more events"}
-                variant={"textDanger"}
-                className="w-auto! text-sm! py-1! px-2!"
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
                 onClick={() => navigate("/events")}
-              />
+                className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-red-600 hover:text-red-700 transition"
+              >
+                <span>Browse All Active Events</span>
+                <ArrowRight size={14} />
+              </button>
             </div>
           )}
         </div>
