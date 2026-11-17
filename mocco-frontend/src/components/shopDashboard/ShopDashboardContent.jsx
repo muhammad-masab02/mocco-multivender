@@ -73,7 +73,7 @@ const ShopDashboardContent = ({
     );
   }
 
-  if (activeView === "all-products") {
+  if (activeView === "allProducts") {
     return (
       <AllProductsTab
         sellerProducts={sellerProducts}
@@ -82,19 +82,19 @@ const ShopDashboardContent = ({
     );
   }
 
-  if (activeView === "create-product") {
+  if (activeView === "createProduct") {
     return <CreateProductTab />;
   }
 
-  if (activeView === "all-events") {
+  if (activeView === "allEvents") {
     return <AllEventsTab sellerEvents={sellerEvents} />;
   }
 
-  if (activeView === "create-event") {
+  if (activeView === "createEvent") {
     return <CreateEventTab />;
   }
 
-  if (activeView === "all-coupons") {
+  if (activeView === "allCoupons") {
     return (
       <AllCouponsTab
         sellerCoupons={sellerCoupons}
@@ -104,11 +104,11 @@ const ShopDashboardContent = ({
     );
   }
 
-  if (activeView === "create-coupon") {
+  if (activeView === "createCoupon") {
     return <CreateCouponTab />;
   }
 
-  if (activeView === "all-orders") {
+  if (activeView === "allOrders") {
     return <OrdersTab />;
   }
 

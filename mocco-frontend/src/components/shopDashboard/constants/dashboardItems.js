@@ -21,43 +21,43 @@ export const dashboardItems = [
         color: "blue",        // Analytics / overview
     },
     {
-        id: "all-products",
+        id: "allProducts",
         label: "All Products",
         icon: Package,
         color: "emerald",     // Inventory / products
     },
     {
-        id: "create-product",
+        id: "createProduct",
         label: "Create Product",
         icon: Plus,
         color: "lime",        // Create / success / add
     },
     {
-        id: "all-events",
+        id: "allEvents",
         label: "All Events",
         icon: Tag,
         color: "orange",      // Promotions / events
     },
     {
-        id: "create-event",
+        id: "createEvent",
         label: "Create Event",
         icon: CalendarDays,
         color: "sky",         // Calendar / scheduling
     },
     {
-        id: "all-coupons",
+        id: "allCoupons",
         label: "All Coupons",
         icon: Gift,
         color: "pink",        // Discounts / gifts
     },
     {
-        id: "create-coupon",
+        id: "createCoupon",
         label: "Create Coupon",
         icon: Ticket,
         color: "indigo",      // Voucher / ticket
     },
     {
-        id: "all-orders",
+        id: "allOrders",
         label: "All Orders",
         icon: ShoppingBag,
         color: "cyan",        // Shopping / orders
