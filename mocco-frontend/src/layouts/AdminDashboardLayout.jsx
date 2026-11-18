@@ -1,14 +1,11 @@
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
-import axios from "axios";
 import AdminDashboardHeader from "../components/adminDashboard/AdminDashboardHeader";
 import AdminDashboardSidebar from "../components/adminDashboard/AdminDashboardSidebar";
 import { adminDashboardItems } from "../components/adminDashboard/constants/adminDashboardItems";
-import { loadUser } from "../services/store/actions/user";
-
-import toast from "react-hot-toast";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import { logoutAdmin } from "../services/store/actions/admin";
+import LogoutConfirmModal from "../components/common/LogoutConfirmModal";
 
 const AdminDashboardLayout = () => {
   const location = useLocation();
@@ -20,27 +17,24 @@ const AdminDashboardLayout = () => {
     ? queryTab
     : "overview";
 
-  const handleLogout = async () => {
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = async () => {
     try {
-      localStorage.removeItem("admin_token");
-      localStorage.removeItem("user_token");
-      const { data } = await axios.get(`${backendUrl}/admin/logout`, {
-        withCredentials: true,
-      });
-      if (data?.success) {
-        toast.success("Admin session terminated safely.");
-        dispatch(loadUser());
-        navigate("/admin/login", { replace: true });
-      }
-    } catch (error) {
-      // Fallback attempt to user logout if admin logout had any issue
-      try {
-        await axios.get(`${backendUrl}/user/logout`, { withCredentials: true });
-      } catch {
-        // ignore fallback error
-      }
-      dispatch(loadUser());
+      setIsLoggingOut(true);
+      await dispatch(logoutAdmin());
+      setIsLogoutModalOpen(false);
       navigate("/admin/login", { replace: true });
+    } catch {
+      setIsLogoutModalOpen(false);
+      navigate("/admin/login", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -73,6 +67,17 @@ const AdminDashboardLayout = () => {
           <Outlet />
         </main>
       </div>
+
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => !isLoggingOut && setIsLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+        isLoading={isLoggingOut}
+        title="Terminate Administrator Session?"
+        subtitle="Are you sure you want to log out of the Super Admin Command Center? System controls and user management will require re-authentication."
+        confirmText="Terminate Session"
+        cancelText="Stay Logged In"
+      />
     </section>
   );
 };

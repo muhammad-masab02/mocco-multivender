@@ -1,12 +1,11 @@
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import ShopDashboardHeader from "../components/shopDashboard/ShopDashboardHeader";
 import ShopDashboardSidebar from "../components/shopDashboard/ShopDashboardSidebar";
 import { dashboardItems } from "../components/shopDashboard/constants/dashboardItems";
-import { loadSeller } from "../services/store/actions/seller";
-
-import toast from "react-hot-toast";
+import { loadSeller, logoutSeller } from "../services/store/actions/seller";
+import LogoutConfirmModal from "../components/common/LogoutConfirmModal";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -25,24 +24,24 @@ const SellerDashboardLayout = () => {
     ? "orders"
     : dashboardItems.some((item) => item.id === queryTab)
       ? queryTab
-      : "dashboard";
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = async () => {
     try {
-      localStorage.removeItem("seller_token");
-      const { data } = await axios.get(`${backendUrl}/shop/logout`, {
-        withCredentials: true,
-      });
-
-      if (data?.success) {
-        toast.success("Logged out successfully");
-        dispatch(loadSeller());
-        navigate("/shop-login", { replace: true });
-      }
-    } catch (error) {
-      localStorage.removeItem("seller_token");
-      dispatch(loadSeller());
+      setIsLoggingOut(true);
+      await dispatch(logoutSeller());
+      setIsLogoutModalOpen(false);
       navigate("/shop-login", { replace: true });
+    } catch {
+      setIsLogoutModalOpen(false);
+      navigate("/shop-login", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -61,6 +60,8 @@ const SellerDashboardLayout = () => {
         activeView={activeView}
         onTabChange={handleTabChange}
         sellerId={seller?._id}
+        sellerAvatar={seller?.avatar?.url}
+        sellerName={seller?.name}
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr]">
@@ -75,6 +76,17 @@ const SellerDashboardLayout = () => {
           <Outlet />
         </main>
       </div>
+
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => !isLoggingOut && setIsLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+        isLoading={isLoggingOut}
+        title="Log Out of Merchant Dashboard?"
+        subtitle="Are you sure you want to log out of your merchant account? You will need to log in again to manage your store, inventory, and orders."
+        confirmText="Yes, Log Out"
+        cancelText="Stay on Dashboard"
+      />
     </section>
   );
 };

@@ -20,8 +20,10 @@ import ChangePasswordTab from "../components/profile/ChangePasswordTab";
 import AddressTab from "../components/profile/AddressTab";
 import PaymentMethodTab from "../components/profile/PaymentMethodTab";
 import LogoutTab from "../components/profile/LogoutTab";
+import LogoutConfirmModal from "../components/common/LogoutConfirmModal";
 import {
   loadUser,
+  logoutUser,
   updateProfile,
   updatePassword,
   addAddress,
@@ -147,6 +149,8 @@ const MyProfile = () => {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentForm, setPaymentForm] = useState(initialPaymentForm);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const derivedProfile = useMemo(
     () => ({
@@ -374,7 +378,7 @@ const MyProfile = () => {
       paymentForm.expiryMonth.length !== 2 ||
       paymentForm.expiryYear.length !== 4
     ) {
-      alert(
+      toast.error(
         "Please enter a valid card holder, last 4 digits, and expiry date.",
       );
       return;
@@ -382,7 +386,7 @@ const MyProfile = () => {
 
     const month = Number(paymentForm.expiryMonth);
     if (month < 1 || month > 12) {
-      alert("Expiry month must be between 01 and 12.");
+      toast.error("Expiry month must be between 01 and 12.");
       return;
     }
 
@@ -402,30 +406,23 @@ const MyProfile = () => {
     setPaymentMethods(nextMethods);
   };
 
-  // handle logout API
-  const handleLogout = async () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      localStorage.removeItem("user_token");
-      localStorage.removeItem("admin_token");
-      try {
-        const res = await axios.get(`${backendUrl}/user/logout`, {
-          withCredentials: true,
-        });
-        toast.success(res.data.message || "Logged out successfully.");
-      } catch {
-        // Fallback cleanup already done in localStorage
-      }
+  // Open logout confirmation modal
+  const handleLogout = () => {
+    setIsLogoutModalOpen(true);
+  };
 
-      dispatch(loadUser());
-
-      // clear logged-in user wishlist/cart
-      dispatch(clearWishlistState());
-      dispatch(clearCartState());
-      // initialize guest wishlist/cart
-      dispatch(initGuestWishlist());
-      dispatch(initGuestCart());
-
+  // Perform confirmed logout
+  const handleConfirmLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await dispatch(logoutUser());
+      setIsLogoutModalOpen(false);
       navigate("/login", { replace: true });
+    } catch {
+      setIsLogoutModalOpen(false);
+      navigate("/login", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -561,6 +558,13 @@ const MyProfile = () => {
           </div>
         </main>
       </div>
+
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => !isLoggingOut && setIsLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+        isLoading={isLoggingOut}
+      />
     </div>
   );
 };

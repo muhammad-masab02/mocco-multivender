@@ -63,6 +63,14 @@ const sellerSlice = createSlice({
             state.statsLoading = false;
             state.statsError = action.payload;
         },
+        // Seller Logout Reducer
+        sellerLogoutSuccess: (state) => {
+            state.isLoading = false;
+            state.isSellerAuthenticated = false;
+            state.seller = null;
+            state.error = null;
+            state.stats = null;
+        },
         // Clear error utility
         clearErrors: (state) => {
             state.error = null;
@@ -81,6 +89,7 @@ export const {
     fetchStatsRequest,
     fetchStatsSuccess,
     fetchStatsFail,
+    sellerLogoutSuccess,
     clearErrors
 } = sellerSlice.actions;
 

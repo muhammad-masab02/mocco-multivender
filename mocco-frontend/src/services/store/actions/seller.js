@@ -1,4 +1,5 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 import {
     loadSellerFail,
     loadSellerRequest,
@@ -9,6 +10,7 @@ import {
     fetchStatsRequest,
     fetchStatsSuccess,
     fetchStatsFail,
+    sellerLogoutSuccess,
 } from "../slices/sellerAuthSlice";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -74,5 +76,21 @@ export const getDashboardStats = () => async (dispatch) => {
             error?.message ||
             "Failed to fetch dashboard stats";
         dispatch(fetchStatsFail(message));
+    }
+};
+
+export const logoutSeller = () => async (dispatch) => {
+    try {
+        localStorage.removeItem("seller_token");
+        await axios.get(`${backendUrl}/shop/logout`, {
+            withCredentials: true,
+        });
+    } catch (error) {
+        console.error("Seller logout error:", error);
+    } finally {
+        localStorage.removeItem("seller_token");
+        dispatch(sellerLogoutSuccess());
+        toast.success("Merchant session ended successfully");
+        return { success: true };
     }
 };

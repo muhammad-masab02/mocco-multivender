@@ -1,5 +1,9 @@
 import { Gift, Inbox, Package, ShoppingBag, Tag, Undo2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUrl";
+
+const SELLER_FALLBACK =
+  "https://dummyimage.com/120x120/e2e8f0/64748b.png&text=Seller";
 
 const TopRightIcon = ({
   title,
@@ -66,8 +70,15 @@ const topIcons = [
   },
 ];
 
-const ShopDashboardHeader = ({ activeView, onTabChange, sellerId }) => {
+const ShopDashboardHeader = ({
+  activeView,
+  onTabChange,
+  sellerId,
+  sellerAvatar,
+  sellerName,
+}) => {
   const sellerProfilePath = sellerId ? `/shop/${sellerId}` : "/shop-login";
+  const avatarSrc = getImageUrl(sellerAvatar, SELLER_FALLBACK);
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
@@ -104,10 +115,12 @@ const ShopDashboardHeader = ({ activeView, onTabChange, sellerId }) => {
             className="cursor-pointer"
           >
             <img
-              src={
-                "https://dummyimage.com/120x120/e2e8f0/64748b.png&text=Seller"
-              }
-              alt="Seller profile"
+              src={avatarSrc}
+              alt={sellerName || "Seller profile"}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = SELLER_FALLBACK;
+              }}
               className="ml-2 h-10 w-10 rounded-full border border-slate-200 object-cover shadow-sm transition hover:scale-105"
             />
           </Link>

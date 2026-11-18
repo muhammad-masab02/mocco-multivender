@@ -1,4 +1,5 @@
 import React from "react";
+import toast from "react-hot-toast";
 import CustomFormInput from "../common/inputs/CustomFormInput";
 import CustomButton from "../common/CustomButton";
 
@@ -61,7 +62,13 @@ const OrderDetails = ({ coupon, setCoupon, handlePlaceOrder }) => {
             className={"text-sm sm:text-base"}
             buttonText="Apply Coupon"
             variant="dark"
-            onClick={() => alert("Apply Coupon")}
+            onClick={() => {
+              if (!coupon?.trim()) {
+                toast.error("Please enter a valid coupon code.");
+              } else {
+                toast.success(`Coupon "${coupon}" applied!`);
+              }
+            }}
           />
         </div>
       </div>

@@ -40,6 +40,13 @@ const userSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
+    // User Logout Reducer
+    userLogoutSuccess: (state) => {
+      state.isLoading = false;
+      state.isUserAuthenticated = false;
+      state.user = null;
+      state.error = null;
+    },
     // Clear error utility
     clearErrors: (state) => {
       state.error = null;
@@ -54,6 +61,7 @@ export const {
   updateProfileRequest,
   updateProfileSuccess,
   updateProfileFail,
+  userLogoutSuccess,
   clearErrors
 } = userSlice.actions;
 

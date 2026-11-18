@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
-import { loadSeller } from "../services/store/actions/seller";
+import { loadSeller, logoutSeller } from "../services/store/actions/seller";
 import { getProducts } from "../services/store/actions/product";
 import { getEvents } from "../services/store/actions/event";
 import MyShopSidebar from "../components/myShop/MyShopSidebar";
@@ -15,6 +15,7 @@ import {
 } from "../components/common/skeletons";
 import ShopEmptyState from "../components/myShop/ShopEmptyState";
 import { backendUrl, initialFormState } from "../components/myShop/utils";
+import LogoutConfirmModal from "../components/common/LogoutConfirmModal";
 import {
   Home as HomeIcon,
   ChevronRight,
@@ -47,6 +48,8 @@ const MyShop = () => {
   const [shopError, setShopError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const isOwner = seller?._id === sellerId;
 
@@ -152,23 +155,21 @@ const MyShop = () => {
   const totalEvents = eventItems.length;
   const totalReviews = reviewItems.length;
 
-  const handleLogout = async () => {
-    try {
-      const { data } = await axios.get(`${backendUrl}/shop/logout`, {
-        withCredentials: true,
-      });
+  const handleLogout = () => {
+    setIsLogoutModalOpen(true);
+  };
 
-      if (data?.success) {
-        toast.success("Logged out successfully");
-        dispatch(loadSeller());
-        navigate("/shop-login", { replace: true });
-      }
-    } catch (error) {
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to logout right now.";
-      toast.error(message);
+  const handleConfirmLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await dispatch(logoutSeller());
+      setIsLogoutModalOpen(false);
+      navigate("/shop-login", { replace: true });
+    } catch {
+      setIsLogoutModalOpen(false);
+      navigate("/shop-login", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -518,6 +519,17 @@ const MyShop = () => {
           </div>
         </div>
       </main>
+
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => !isLoggingOut && setIsLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+        isLoading={isLoggingOut}
+        title="Log Out of Merchant Account?"
+        subtitle="Are you sure you want to end your seller session for this shop? You will need to log in again to manage your products and store settings."
+        confirmText="Yes, Log Out"
+        cancelText="Stay on Storefront"
+      />
     </div>
   );
 };

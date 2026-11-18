@@ -44,8 +44,7 @@ export const getClearCookieOptions = (req) => {
 export const clearAuthCookie = (res, cookieName, req) => {
   const isProduction = getIsProduction(req);
 
-  // Clear with exact production attributes
-  const primaryOptions = {
+  const clearOptions = {
     expires: new Date(0),
     maxAge: 0,
     httpOnly: true,
@@ -54,21 +53,7 @@ export const clearAuthCookie = (res, cookieName, req) => {
     path: "/",
   };
 
-  res.cookie(cookieName, "", primaryOptions);
-  res.clearCookie(cookieName, primaryOptions);
-
-  // If in production, also issue Lax fallback clear in case cookie was set under Lax
-  if (isProduction) {
-    const fallbackOptions = {
-      expires: new Date(0),
-      maxAge: 0,
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      path: "/",
-    };
-    res.clearCookie(cookieName, fallbackOptions);
-  }
+  res.cookie(cookieName, "", clearOptions);
 };
 
 const sendToken = (payload, statusCode, res, entityName = "user", req = null) => {

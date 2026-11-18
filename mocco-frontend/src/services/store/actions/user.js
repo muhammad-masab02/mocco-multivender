@@ -1,11 +1,13 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 import {
     loadUserRequest,
     loadUserSuccess,
     loadUserFail,
     updateProfileRequest,
     updateProfileSuccess,
-    updateProfileFail
+    updateProfileFail,
+    userLogoutSuccess
 } from "../slices/userAuthSlice";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -97,5 +99,22 @@ export const deleteAddress = (addressId) => async (dispatch) => {
         const message = error?.response?.data?.message || error?.message || "Failed to delete address";
         dispatch(updateProfileFail(message));
         return { success: false, message };
+    }
+};
+
+export const logoutUser = () => async (dispatch) => {
+    try {
+        localStorage.removeItem("user_token");
+        localStorage.removeItem("admin_token");
+        await axios.get(`${backendUrl}/user/logout`, {
+            withCredentials: true,
+        });
+    } catch (error) {
+        console.error("User logout error:", error);
+    } finally {
+        localStorage.removeItem("user_token");
+        localStorage.removeItem("admin_token");
+        dispatch(userLogoutSuccess());
+        toast.success("Logged out successfully");
     }
 };

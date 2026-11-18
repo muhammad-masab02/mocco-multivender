@@ -22,7 +22,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { navItems, categoriesData } from "../../static/data.jsx";
-import { loadUser } from "../../services/store/actions/user.js";
+import { loadUser, logoutUser } from "../../services/store/actions/user.js";
 import { getAllEvents } from "../../services/store/actions/event.js";
 import { clearWishlistState } from "../../services/store/slices/wishlistSlice.js";
 import { clearCartState } from "../../services/store/slices/cartSlice.js";
@@ -30,6 +30,7 @@ import { initGuestWishlist } from "../../services/store/actions/wishlist.js";
 import { initGuestCart } from "../../services/store/actions/cart.js";
 import { getImageUrl } from "../../utils/imageUrl.js";
 import GlobalSearch from "./GlobalSearch.jsx";
+import LogoutConfirmModal from "../common/LogoutConfirmModal.jsx";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -55,6 +56,8 @@ const Header = () => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const categoryDropdownRef = useRef(null);
   const profileDropdownRef = useRef(null);
@@ -110,30 +113,23 @@ const Header = () => {
   }, [location.pathname]);
 
   // Handle logout
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setIsProfileOpen(false);
+    setMenuOpen(false);
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = async () => {
     try {
-      localStorage.removeItem("user_token");
-      localStorage.removeItem("admin_token");
-      const { data } = await axios.get(`${backendUrl}/user/logout`, {
-        withCredentials: true,
-      });
-      if (data?.success) {
-        dispatch(loadUser());
-        dispatch(clearWishlistState());
-        dispatch(clearCartState());
-        dispatch(initGuestWishlist());
-        dispatch(initGuestCart());
-        navigate("/login", { replace: true });
-      }
-    } catch (error) {
-      localStorage.removeItem("user_token");
-      localStorage.removeItem("admin_token");
-      dispatch(loadUser());
-      dispatch(clearWishlistState());
-      dispatch(clearCartState());
-      dispatch(initGuestWishlist());
-      dispatch(initGuestCart());
+      setIsLoggingOut(true);
+      await dispatch(logoutUser());
+      setIsLogoutModalOpen(false);
       navigate("/login", { replace: true });
+    } catch {
+      setIsLogoutModalOpen(false);
+      navigate("/login", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -690,6 +686,13 @@ const Header = () => {
           </div>
         </div>
       </Drawer>
+
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => !isLoggingOut && setIsLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+        isLoading={isLoggingOut}
+      />
     </header>
   );
 };

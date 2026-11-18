@@ -1,4 +1,5 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 import {
   statsRequest, statsSuccess, statsFail,
   usersRequest, usersSuccess, usersFail, deleteUserSuccess,
@@ -8,6 +9,7 @@ import {
   ordersRequest, ordersSuccess, ordersFail,
   withdrawRequest, withdrawSuccess, withdrawFail, updateWithdrawSuccess,
 } from "../slices/adminSlice";
+import { userLogoutSuccess } from "../slices/userAuthSlice";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -137,5 +139,21 @@ export const updateWithdrawRequestStatus = (requestId, status) => async (dispatc
     return { success: true };
   } catch (err) {
     return { success: false, message: err.response?.data?.message || err.message };
+  }
+};
+
+export const logoutAdmin = () => async (dispatch) => {
+  try {
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("user_token");
+    await api.get("/admin/logout");
+  } catch (err) {
+    console.error("Admin logout error:", err);
+  } finally {
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("user_token");
+    dispatch(userLogoutSuccess());
+    toast.success("Admin session terminated safely.");
+    return { success: true };
   }
 };

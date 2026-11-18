@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import TableShell from "../shared/TableShell";
 import TableActionMenu from "../shared/TableActionMenu";
 import TruncateTextCell from "../shared/TruncateTextCell";
@@ -25,12 +26,12 @@ const AllProductsTab = ({ sellerProducts = [], productLoading = false }) => {
 
   const handleDeleteProduct = async (productId) => {
     if (!productId) return;
-    const shouldDelete = window.confirm("Delete this product?");
-    if (!shouldDelete) return;
+    if (!window.confirm("Delete this product? This cannot be undone.")) return;
     try {
       await dispatch(deleteProduct(productId));
+      toast.success("Product deleted successfully!");
     } catch (error) {
-      window.alert(error?.message || "Failed to delete product");
+      toast.error(error?.message || "Failed to delete product");
     }
   };
 
@@ -41,12 +42,13 @@ const AllProductsTab = ({ sellerProducts = [], productLoading = false }) => {
     }));
     try {
       await dispatch(toggleFeatured(productId));
+      toast.success(!currentIsFeatured ? "Product marked as featured!" : "Product unfeatured.");
     } catch (error) {
       setFeaturedState((prev) => ({
         ...prev,
         [productId]: currentIsFeatured,
       }));
-      window.alert(error?.message || "Failed to update featured status");
+      toast.error(error?.message || "Failed to update featured status");
     }
   };
 

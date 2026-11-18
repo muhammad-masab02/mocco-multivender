@@ -101,6 +101,11 @@ const MyShopSidebar = ({
           <img
             src={displayShop.avatarUrl}
             alt={displayShop.name || "Shop avatar"}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src =
+                "https://dummyimage.com/240x240/e2e8f0/64748b.png&text=Shop";
+            }}
             className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white object-cover shadow-md ring-2 ring-slate-100"
           />
           <span className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white shadow-xs" title="Verified Seller">

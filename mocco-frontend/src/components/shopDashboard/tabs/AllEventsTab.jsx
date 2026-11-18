@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import TableShell from "../shared/TableShell";
 import TableActionMenu from "../shared/TableActionMenu";
 import TruncateTextCell from "../shared/TruncateTextCell";
@@ -35,12 +36,12 @@ const AllEventsTab = () => {
 
   const handleDeleteEvent = async (eventId) => {
     if (!eventId) return;
-    const shouldDelete = window.confirm("Are you sure you want to delete this event?");
-    if (!shouldDelete) return;
+    if (!window.confirm("Are you sure you want to delete this event?")) return;
     try {
       await dispatch(deleteEvent(eventId));
+      toast.success("Event deleted successfully!");
     } catch (err) {
-      window.alert(err?.message || "Failed to delete event");
+      toast.error(err?.message || "Failed to delete event");
     }
   };
 

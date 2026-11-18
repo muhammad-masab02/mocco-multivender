@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
 import ShopDashboardContent from "../components/shopDashboard/ShopDashboardContent";
 import { dashboardItems } from "../components/shopDashboard/constants/dashboardItems";
 import { getProducts } from "../services/store/actions/product";
@@ -94,13 +95,13 @@ const ShopDashboard = () => {
   const handleDeleteCoupon = async (couponId) => {
     if (!couponId) return;
 
-    const shouldDelete = window.confirm("Delete this coupon?");
-    if (!shouldDelete) return;
+    if (!window.confirm("Delete this coupon? This cannot be undone.")) return;
 
     try {
       await dispatch(deleteCoupon(couponId));
+      toast.success("Coupon deleted successfully!");
     } catch (error) {
-      window.alert(error?.message || "Failed to delete coupon");
+      toast.error(error?.message || "Failed to delete coupon");
     }
   };
 
@@ -155,12 +156,12 @@ const ShopDashboard = () => {
     const pin = String(payload?.pin || "").trim();
 
     if (!/^\d{8,30}$/.test(accountNumber)) {
-      window.alert("Account number must be between 8 and 30 digits.");
+      toast.error("Account number must be between 8 and 30 digits.");
       return;
     }
 
     if (!/^\d{4}$/.test(pin)) {
-      window.alert("PIN must be exactly 4 digits.");
+      toast.error("PIN must be exactly 4 digits.");
       return;
     }
 
