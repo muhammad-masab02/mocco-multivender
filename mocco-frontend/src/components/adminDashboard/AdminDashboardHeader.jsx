@@ -38,31 +38,31 @@ const topIcons = [
     title: "Users",
     icon: Users,
     colorClass: "text-emerald-600",
-    tabId: "all-users",
+    tabId: "allUsers",
   },
   {
     title: "Sellers",
     icon: Store,
     colorClass: "text-orange-600",
-    tabId: "all-sellers",
+    tabId: "allSellers",
   },
   {
     title: "Products",
     icon: Package,
     colorClass: "text-purple-600",
-    tabId: "all-products",
+    tabId: "allProducts",
   },
   {
     title: "Events",
     icon: Tag,
     colorClass: "text-pink-600",
-    tabId: "all-events",
+    tabId: "allEvents",
   },
   {
     title: "Withdraw",
     icon: Wallet,
     colorClass: "text-amber-600",
-    tabId: "withdraw-requests",
+    tabId: "withdraw",
   },
 ];
 
@@ -75,7 +75,7 @@ const AdminDashboardHeader = ({ activeView, onTabChange }) => {
         {/* Brand & Badge */}
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-red-600 to-rose-700 flex items-center justify-center font-bold text-white text-base shadow-sm group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-linear-to-tr from-red-600 to-rose-700 flex items-center justify-center font-bold text-white text-base shadow-sm group-hover:scale-105 transition-transform">
               M
             </div>
             <div>

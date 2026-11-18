@@ -23,7 +23,7 @@ export const adminDashboardItems = [
     color: "cyan",
   },
   {
-    id: "all-users",
+    id: "allUsers",
     label: "All Users",
     icon: Users,
     color: "emerald",
@@ -35,19 +35,19 @@ export const adminDashboardItems = [
     color: "orange",
   },
   {
-    id: "all-products",
+    id: "allProducts",
     label: "All Products",
     icon: Package,
     color: "purple",
   },
   {
-    id: "all-events",
+    id: "allEvents",
     label: "All Events",
     icon: Tag,
     color: "pink",
   },
   {
-    id: "withdraw-requests",
+    id: "withdraw",
     label: "Withdraw Requests",
     icon: Wallet,
     color: "amber",

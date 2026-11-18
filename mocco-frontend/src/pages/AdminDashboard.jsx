@@ -15,15 +15,15 @@ const AdminDashboard = () => {
     switch (tab) {
       case "all-orders":
         return <AdminOrdersTab />;
-      case "all-users":
+      case "allUsers":
         return <AdminUsersTab />;
-      case "all-sellers":
+      case "allSellers":
         return <AdminSellersTab />;
-      case "all-products":
+      case "allProducts":
         return <AdminProductsTab />;
-      case "all-events":
+      case "allEvents":
         return <AdminEventsTab />;
-      case "withdraw-requests":
+      case "withdraw":
         return <AdminWithdrawTab />;
       default:
         return <AdminOverviewTab />;

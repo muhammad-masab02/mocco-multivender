@@ -140,7 +140,7 @@ const AdminOverviewTab = () => {
       bgClass: "bg-blue-50",
       colorClass: "text-blue-600",
       subtitle: "Active customer accounts",
-      onClick: () => navigate("/admin?tab=all-users"),
+      onClick: () => navigate("/admin?tab=allUsers"),
     },
     {
       title: "Active Stores",
@@ -149,7 +149,7 @@ const AdminOverviewTab = () => {
       bgClass: "bg-emerald-50",
       colorClass: "text-emerald-600",
       subtitle: "Verified marketplace vendors",
-      onClick: () => navigate("/admin?tab=all-sellers"),
+      onClick: () => navigate("/admin?tab=allSellers"),
     },
     {
       title: "Catalog Products",
@@ -158,7 +158,7 @@ const AdminOverviewTab = () => {
       bgClass: "bg-purple-50",
       colorClass: "text-purple-600",
       subtitle: "Live items across stores",
-      onClick: () => navigate("/admin?tab=all-products"),
+      onClick: () => navigate("/admin?tab=allProducts"),
     },
     {
       title: "Sale Events",
@@ -167,7 +167,7 @@ const AdminOverviewTab = () => {
       bgClass: "bg-pink-50",
       colorClass: "text-pink-600",
       subtitle: "Promotions & flash sales",
-      onClick: () => navigate("/admin?tab=all-events"),
+      onClick: () => navigate("/admin?tab=allEvents"),
     },
     {
       title: "Platform Orders",
@@ -176,7 +176,7 @@ const AdminOverviewTab = () => {
       bgClass: "bg-sky-50",
       colorClass: "text-sky-600",
       subtitle: "Lifetime customer checkouts",
-      onClick: () => navigate("/admin?tab=all-orders"),
+      onClick: () => navigate("/admin?tab=allOrders"),
     },
     {
       title: "Pending Payouts",
@@ -185,7 +185,7 @@ const AdminOverviewTab = () => {
       bgClass: "bg-amber-50",
       colorClass: "text-amber-600",
       subtitle: "Vendor withdrawals pending",
-      onClick: () => navigate("/admin?tab=withdraw-requests"),
+      onClick: () => navigate("/admin?tab=withdraw"),
     },
     {
       title: "Gross Marketplace Sales",
@@ -208,7 +208,7 @@ const AdminOverviewTab = () => {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* ── 1. Hero Welcome & Admin Overview Banner ─────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-6 sm:p-8 lg:p-10 shadow-lg shadow-slate-900/10">
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-linear-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-6 sm:p-8 lg:p-10 shadow-lg shadow-slate-900/10">
         <div className="pointer-events-none absolute -right-20 -top-20 w-80 h-80 rounded-full bg-red-600/20 blur-3xl" />
         <div className="pointer-events-none absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-blue-600/10 blur-3xl" />
 

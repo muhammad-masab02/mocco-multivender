@@ -209,7 +209,7 @@ const DashboardTab = ({
               icon={Package}
               iconWrapClass="bg-blue-50 text-blue-600"
               iconClass="text-blue-600"
-              onClick={() => navigate("/shop-dashboard/?tab=all-products")}
+              onClick={() => navigate("/shop-dashboard/?tab=allProducts")}
             />
             <DashboardStatCard
               title="Total Orders"
@@ -218,7 +218,7 @@ const DashboardTab = ({
               icon={ShoppingBag}
               iconWrapClass="bg-emerald-50 text-emerald-600"
               iconClass="text-emerald-600"
-              onClick={() => navigate("/shop-dashboard/?tab=all-orders")}
+              onClick={() => navigate("/shop-dashboard/?tab=allOrders")}
             />
             <DashboardStatCard
               title="Units Sold"
@@ -238,7 +238,7 @@ const DashboardTab = ({
               icon={CalendarDays}
               iconWrapClass="bg-orange-50 text-orange-600"
               iconClass="text-orange-600"
-              onClick={() => navigate("/shop-dashboard/?tab=all-events")}
+              onClick={() => navigate("/shop-dashboard/?tab=allEvents")}
             />
           </>
         )}
@@ -259,7 +259,7 @@ const DashboardTab = ({
 
           <button
             type="button"
-            onClick={() => navigate("/shop-dashboard/?tab=all-orders")}
+            onClick={() => navigate("/shop-dashboard/?tab=allOrders")}
             className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 hover:text-red-600 transition-colors self-start sm:self-auto cursor-pointer"
           >
             <span>View All Orders</span>
