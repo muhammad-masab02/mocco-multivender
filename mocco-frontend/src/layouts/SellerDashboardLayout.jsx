@@ -24,6 +24,8 @@ const SellerDashboardLayout = () => {
     ? "orders"
     : dashboardItems.some((item) => item.id === queryTab)
       ? queryTab
+      : "dashboard";
+
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
