@@ -61,7 +61,7 @@ const AdminLogin = () => {
 
     setIsLoading(true);
     try {
-      const { data } = await axios.post(`${backendUrl}/user/login`, formData, {
+      const { data } = await axios.post(`${backendUrl}/admin/login`, formData, {
         withCredentials: true,
         headers: {
           "Content-Type": "application/json",
@@ -69,9 +69,14 @@ const AdminLogin = () => {
       });
 
       if (data?.success) {
-        // Load the authenticated user profile
+        if (data.token) {
+          localStorage.setItem("admin_token", data.token);
+          localStorage.removeItem("user_token");
+        }
+
+        // Load the authenticated profile into Redux
         const userRes = await dispatch(loadUser());
-        const currentUser = userRes?.user || data?.user;
+        const currentUser = userRes?.user || data?.admin || data?.user;
 
         const role = String(currentUser?.role || "").toLowerCase();
 
@@ -86,8 +91,9 @@ const AdminLogin = () => {
           setFormData({ email: "", password: "" });
           navigate("/admin", { replace: true });
         } else {
-          // Account is not an admin, logout to clean cookie and reject
-          await axios.get(`${backendUrl}/user/logout`, {
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("user_token");
+          await axios.get(`${backendUrl}/admin/logout`, {
             withCredentials: true,
           });
           dispatch(loadUser());
@@ -102,6 +108,8 @@ const AdminLogin = () => {
         toast.error(data?.message || "Invalid administrator credentials.");
       }
     } catch (err) {
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("user_token");
       const message =
         err.response?.data?.message ||
         err.message ||

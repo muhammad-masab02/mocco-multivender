@@ -61,6 +61,12 @@ const SignIn = () => {
 
       if (data?.success) {
         toast.success("Welcome back to Mocco Mart!");
+        if (data.token) {
+          localStorage.setItem("user_token", data.token);
+          if (String(data.user?.role || "").toLowerCase() === "admin") {
+            localStorage.setItem("admin_token", data.token);
+          }
+        }
         await dispatch(loadUser());
 
         // --- MERGE WISHLIST ---

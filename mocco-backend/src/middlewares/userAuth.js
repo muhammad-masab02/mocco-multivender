@@ -4,13 +4,21 @@ import jwt from "jsonwebtoken";
 
 const isUserAuthenticated = async (req, res, next) => {
     try {
-        const { user_token } = req.cookies;
+        const token =
+            req.cookies?.admin_token ||
+            req.cookies?.user_token ||
+            (req.headers?.authorization?.startsWith("Bearer ")
+                ? req.headers.authorization.split(" ")[1]
+                : req.headers?.authorization) ||
+            req.headers?.["admin_token"] ||
+            req.headers?.["user_token"] ||
+            req.headers?.["x-access-token"];
 
-        if (!user_token) {
+        if (!token) {
             return next(new ErrorHandler("Unauthorized! No token provided.", 401));
         }
 
-        const decoded = jwt.verify(user_token, process.env.JWT_SECRET_KEY);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
         req.user = await User.findById(decoded.id).select("-password");
 
         if (!req.user) {

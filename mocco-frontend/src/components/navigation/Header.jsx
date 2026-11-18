@@ -112,6 +112,8 @@ const Header = () => {
   // Handle logout
   const handleLogout = async () => {
     try {
+      localStorage.removeItem("user_token");
+      localStorage.removeItem("admin_token");
       const { data } = await axios.get(`${backendUrl}/user/logout`, {
         withCredentials: true,
       });
@@ -124,7 +126,14 @@ const Header = () => {
         navigate("/login", { replace: true });
       }
     } catch (error) {
-      console.error("Logout error:", error);
+      localStorage.removeItem("user_token");
+      localStorage.removeItem("admin_token");
+      dispatch(loadUser());
+      dispatch(clearWishlistState());
+      dispatch(clearCartState());
+      dispatch(initGuestWishlist());
+      dispatch(initGuestCart());
+      navigate("/login", { replace: true });
     }
   };
 

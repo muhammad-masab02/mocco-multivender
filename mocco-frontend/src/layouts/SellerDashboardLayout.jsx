@@ -29,6 +29,7 @@ const SellerDashboardLayout = () => {
 
   const handleLogout = async () => {
     try {
+      localStorage.removeItem("seller_token");
       const { data } = await axios.get(`${backendUrl}/shop/logout`, {
         withCredentials: true,
       });
@@ -39,11 +40,9 @@ const SellerDashboardLayout = () => {
         navigate("/shop-login", { replace: true });
       }
     } catch (error) {
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to logout right now.";
-      toast.error(message);
+      localStorage.removeItem("seller_token");
+      dispatch(loadSeller());
+      navigate("/shop-login", { replace: true });
     }
   };
 

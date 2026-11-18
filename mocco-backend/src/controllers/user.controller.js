@@ -2,10 +2,12 @@ import jwt from "jsonwebtoken";
 import sendMail from "../utils/sendMail.js";
 import User from "../models/user.model.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
-import sendToken, { getClearCookieOptions } from "../utils/jwtToken.js";
+import sendToken, { clearAuthCookie } from "../utils/jwtToken.js";
 import { createActivationToken } from "../utils/createToken.js";
 import catchAsyncErrors from "../middlewares/CatchAsyncErrors.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const registerUser = catchAsyncErrors(async (req, res, next) => {
   try {
@@ -17,8 +19,12 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
         .json({ success: false, message: "Please enter all fields!" });
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    // Check if user already exists (case-insensitive)
+    const existingUser = await User.findOne({
+      email: { $regex: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i") },
+    });
     if (existingUser) {
       return next(new ErrorHandler("User already exists!", 400));
     }
@@ -38,8 +44,8 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
 
     // Create user object
     const user = {
-      name,
-      email,
+      name: name.trim(),
+      email: normalizedEmail,
       password,
       avatar,
     };
@@ -69,8 +75,6 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
         ),
       );
     }
-
-    // Create new user
   } catch (error) {
     console.error("Error in registerUser:", error);
     return next(
@@ -92,8 +96,11 @@ const activateUserEmail = catchAsyncErrors(async (req, res, next) => {
       process.env.ACTIVATION_TOKEN_SECRET_KEY || process.env.JWT_SECRET_KEY;
 
     const decodedToken = jwt.verify(token, activationSecret);
+    const normalizedEmail = String(decodedToken.email).trim().toLowerCase();
 
-    const existingUser = await User.findOne({ email: decodedToken.email });
+    const existingUser = await User.findOne({
+      email: { $regex: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i") },
+    });
 
     if (existingUser) {
       return next(new ErrorHandler("User already activated!", 400));
@@ -101,12 +108,12 @@ const activateUserEmail = catchAsyncErrors(async (req, res, next) => {
 
     const createdUser = await User.create({
       name: decodedToken.name,
-      email: decodedToken.email,
+      email: normalizedEmail,
       password: decodedToken.password,
       avatar: decodedToken.avatar,
     });
 
-    sendToken(createdUser, 201, res, "user");
+    sendToken(createdUser, 201, res, "user", req);
   } catch (error) {
     console.error("Error in activateUserEmail:", error);
     return next(
@@ -118,7 +125,7 @@ const activateUserEmail = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-// login user controller is handled in auth.controller.js
+// login user controller
 const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -126,7 +133,12 @@ const loginUser = async (req, res, next) => {
       return next(new ErrorHandler("Please enter all fields!", 400));
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    // Look up user with case-insensitive regex to guarantee cross-browser matching
+    const user = await User.findOne({
+      email: { $regex: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i") },
+    }).select("+password");
 
     if (!user) {
       return next(new ErrorHandler("Invalid email or password!", 401));
@@ -142,8 +154,7 @@ const loginUser = async (req, res, next) => {
       return next(new ErrorHandler("Invalid email or password!", 401));
     }
 
-    sendToken(user, 200, res, "user");
-
+    sendToken(user, 200, res, "user", req);
   } catch (error) {
     console.error("Error in loginUser:", error);
     return next(
@@ -153,7 +164,7 @@ const loginUser = async (req, res, next) => {
       ),
     );
   }
-}
+};
 
 // get user profile/data
 const getUser = async (req, res, next) => {
@@ -183,7 +194,8 @@ const getUser = async (req, res, next) => {
 // log out user 
 const logoutUser = async (req, res, next) => {
   try {
-    res.clearCookie("user_token", getClearCookieOptions());
+    clearAuthCookie(res, "user_token", req);
+    clearAuthCookie(res, "admin_token", req);
 
     res.status(200).json({
       success: true,

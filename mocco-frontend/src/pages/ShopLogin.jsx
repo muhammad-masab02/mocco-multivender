@@ -57,6 +57,9 @@ const ShopLogin = () => {
 
       if (data?.success) {
         toast.success("Merchant session authenticated successfully!");
+        if (data.token) {
+          localStorage.setItem("seller_token", data.token);
+        }
         await dispatch(loadUser());
         await dispatch(loadSeller());
         setFormData({ email: "", password: "" });

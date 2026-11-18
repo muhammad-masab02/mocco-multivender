@@ -11,8 +11,27 @@ import {
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
-// Helper
+// Helper axios instance with credentials and token header injection
 const api = axios.create({ baseURL: API_URL, withCredentials: true });
+
+api.interceptors.request.use(
+  (config) => {
+    config.withCredentials = true;
+    try {
+      const adminToken = localStorage.getItem("admin_token");
+      if (adminToken) {
+        config.headers["admin_token"] = adminToken;
+        if (!config.headers["Authorization"]) {
+          config.headers["Authorization"] = `Bearer ${adminToken}`;
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 export const fetchAdminStats = () => async (dispatch) => {

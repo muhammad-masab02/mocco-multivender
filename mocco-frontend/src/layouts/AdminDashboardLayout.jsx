@@ -22,7 +22,9 @@ const AdminDashboardLayout = () => {
 
   const handleLogout = async () => {
     try {
-      const { data } = await axios.get(`${backendUrl}/user/logout`, {
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("user_token");
+      const { data } = await axios.get(`${backendUrl}/admin/logout`, {
         withCredentials: true,
       });
       if (data?.success) {
@@ -31,11 +33,14 @@ const AdminDashboardLayout = () => {
         navigate("/admin/login", { replace: true });
       }
     } catch (error) {
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to logout right now.";
-      toast.error(message);
+      // Fallback attempt to user logout if admin logout had any issue
+      try {
+        await axios.get(`${backendUrl}/user/logout`, { withCredentials: true });
+      } catch {
+        // ignore fallback error
+      }
+      dispatch(loadUser());
+      navigate("/admin/login", { replace: true });
     }
   };
 

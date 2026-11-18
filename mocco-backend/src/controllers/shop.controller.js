@@ -5,9 +5,11 @@ import Event from "../models/event.model.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
 import { createActivationToken } from "../utils/createToken.js";
 import sendMail from "../utils/sendMail.js";
-import sendToken, { getClearCookieOptions } from "../utils/jwtToken.js";
+import sendToken, { clearAuthCookie } from "../utils/jwtToken.js";
 import jwt from "jsonwebtoken";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // shop create 
 const registerShop = async (req, res, next) => {
@@ -31,8 +33,12 @@ const registerShop = async (req, res, next) => {
                 .json({ success: false, message: "Please enter all fields!" });
         }
 
-        // Check if shop already exists
-        const existingShop = await Shop.findOne({ email });
+        const normalizedEmail = String(email).trim().toLowerCase();
+
+        // Check if shop already exists (case-insensitive)
+        const existingShop = await Shop.findOne({
+            email: { $regex: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i") },
+        });
         if (existingShop) {
             return next(new ErrorHandler("Shop already exists!", 400));
         }
@@ -53,7 +59,7 @@ const registerShop = async (req, res, next) => {
         // Create shop object
         const shop = {
             name,
-            email,
+            email: normalizedEmail,
             password,
             phoneNumber,
             description,
@@ -113,8 +119,11 @@ const activateShopEmail = async (req, res, next) => {
             process.env.ACTIVATION_TOKEN_SECRET_KEY || process.env.JWT_SECRET_KEY;
 
         const decodedToken = jwt.verify(token, activationSecret);
+        const normalizedEmail = String(decodedToken.email).trim().toLowerCase();
 
-        const existingShop = await Shop.findOne({ email: decodedToken.email });
+        const existingShop = await Shop.findOne({
+            email: { $regex: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i") },
+        });
 
         if (existingShop) {
             return next(new ErrorHandler("Shop already activated!", 400));
@@ -122,7 +131,7 @@ const activateShopEmail = async (req, res, next) => {
 
         const createdShop = await Shop.create({
             name: decodedToken.name,
-            email: decodedToken.email,
+            email: normalizedEmail,
             password: decodedToken.password,
             avatar: decodedToken.avatar,
             phoneNumber: decodedToken.phoneNumber,
@@ -131,7 +140,7 @@ const activateShopEmail = async (req, res, next) => {
             zipCode: decodedToken.zipCode,
         });
 
-        sendToken(createdShop, 201, res, "seller");
+        sendToken(createdShop, 201, res, "seller", req);
     } catch (error) {
         console.error("Error in activateShopEmail:", error);
         return next(
@@ -151,7 +160,11 @@ const loginShop = async (req, res, next) => {
             return next(new ErrorHandler("Please enter all fields!", 400));
         }
 
-        const shop = await Shop.findOne({ email }).select("+password");
+        const normalizedEmail = String(email).trim().toLowerCase();
+
+        const shop = await Shop.findOne({
+            email: { $regex: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i") },
+        }).select("+password");
 
         if (!shop) {
             return next(new ErrorHandler("Invalid email or password!", 401));
@@ -167,7 +180,7 @@ const loginShop = async (req, res, next) => {
             return next(new ErrorHandler("Invalid email or password!", 401));
         }
 
-        sendToken(shop, 200, res, "seller");
+        sendToken(shop, 200, res, "seller", req);
 
     } catch (error) {
         console.error("Error in loginShop:", error);
@@ -279,7 +292,7 @@ const getShopInfo = async (req, res, next) => {
 // log out shop 
 const logoutShop = async (req, res, next) => {
     try {
-        res.clearCookie("seller_token", getClearCookieOptions());
+        clearAuthCookie(res, "seller_token", req);
 
         res.status(200).json({
             success: true,

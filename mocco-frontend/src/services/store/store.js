@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { MoccoMartApi } from "../api";
+import { MoccoMartApi } from "../api/index.js";
 import userReducer from "./slices/userAuthSlice";
 import sellerReducer from "./slices/sellerAuthSlice";
 import productReducer from "./slices/productSlice";

@@ -1,5 +1,6 @@
 // import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import "./services/axiosClient.js";
 import "./index.css";
 import App from "./App.jsx";
 import { store } from "./services/store/store.js";

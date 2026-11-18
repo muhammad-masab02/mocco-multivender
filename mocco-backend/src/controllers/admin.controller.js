@@ -6,6 +6,9 @@ import Product from "../models/product.model.js";
 import Event from "../models/event.model.js";
 import Order from "../models/order.model.js";
 import Withdraw from "../models/withdraw.model.js";
+import sendToken, { clearAuthCookie } from "../utils/jwtToken.js";
+
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // ─── GET /api/v1/admin/dashboard/stats ───────────────────────────────────────
 const getDashboardStats = catchAsyncErrors(async (req, res, next) => {
@@ -234,7 +237,91 @@ const updateWithdrawStatus = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+// ─── POST /api/v1/admin/login ────────────────────────────────────────────────
+const loginAdmin = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return next(new ErrorHandler("Please enter both administrator email and password!", 400));
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    // Find user by normalized email (case-insensitive fallback)
+    const adminUser = await User.findOne({
+      email: { $regex: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i") },
+    }).select("+password");
+
+    if (!adminUser) {
+      return next(new ErrorHandler("Invalid administrator credentials!", 401));
+    }
+
+    if (!adminUser.password) {
+      return next(new ErrorHandler("Invalid administrator credentials!", 401));
+    }
+
+    const isPasswordMatched = await adminUser.comparePassword(password);
+    if (!isPasswordMatched) {
+      return next(new ErrorHandler("Invalid administrator credentials!", 401));
+    }
+
+    // Strict role check
+    const role = String(adminUser.role || "").toLowerCase();
+    if (role !== "admin") {
+      return next(
+        new ErrorHandler(
+          "Access denied! This account does not possess Super Administrator privileges.",
+          403,
+        ),
+      );
+    }
+
+    sendToken(adminUser, 200, res, "admin", req);
+  } catch (error) {
+    console.error("Error in loginAdmin:", error);
+    return next(new ErrorHandler("Failed to authenticate administrator! " + error.message, 500));
+  }
+});
+
+// ─── GET & POST /api/v1/admin/logout ─────────────────────────────────────────
+const logoutAdmin = catchAsyncErrors(async (req, res, next) => {
+  try {
+    clearAuthCookie(res, "admin_token", req);
+    clearAuthCookie(res, "user_token", req);
+
+    res.status(200).json({
+      success: true,
+      message: "Super Administrator session terminated successfully!",
+    });
+  } catch (error) {
+    console.error("Error in logoutAdmin:", error);
+    return next(new ErrorHandler("Failed to logout administrator! " + error.message, 500));
+  }
+});
+
+// ─── GET /api/v1/admin/me ────────────────────────────────────────────────────
+const getAdminProfile = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const admin = await User.findById(req.user._id);
+    if (!admin || String(admin.role || "").toLowerCase() !== "admin") {
+      return next(new ErrorHandler("Admin not found or unauthorized!", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      admin,
+    });
+  } catch (error) {
+    console.error("Error in getAdminProfile:", error);
+    return next(new ErrorHandler("Failed to fetch administrator profile! " + error.message, 500));
+  }
+});
+
 export {
+  loginAdmin,
+  logoutAdmin,
+  getAdminProfile,
   getDashboardStats,
   getAllUsers,
   deleteUser,

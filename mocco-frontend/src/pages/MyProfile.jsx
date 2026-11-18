@@ -405,11 +405,17 @@ const MyProfile = () => {
   // handle logout API
   const handleLogout = async () => {
     if (window.confirm("Are you sure you want to log out?")) {
-      const res = await axios.get(`${backendUrl}/user/logout`, {
-        withCredentials: true,
-      });
+      localStorage.removeItem("user_token");
+      localStorage.removeItem("admin_token");
+      try {
+        const res = await axios.get(`${backendUrl}/user/logout`, {
+          withCredentials: true,
+        });
+        toast.success(res.data.message || "Logged out successfully.");
+      } catch {
+        // Fallback cleanup already done in localStorage
+      }
 
-      toast.success(res.data.message || "Logged out successfully.");
       dispatch(loadUser());
 
       // clear logged-in user wishlist/cart

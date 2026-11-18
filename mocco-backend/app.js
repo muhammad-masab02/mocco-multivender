@@ -49,6 +49,16 @@ app.use(
       }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "user_token",
+      "seller_token",
+      "admin_token",
+      "x-access-token",
+    ],
   }),
 );
 

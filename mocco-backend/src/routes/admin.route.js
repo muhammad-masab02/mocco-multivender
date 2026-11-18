@@ -1,6 +1,9 @@
 import express from "express";
 import isAdminAuthenticated from "../middlewares/adminAuth.js";
 import {
+  loginAdmin,
+  logoutAdmin,
+  getAdminProfile,
   getDashboardStats,
   getAllUsers,
   deleteUser,
@@ -15,10 +18,16 @@ import {
 
 const adminRouter = express.Router();
 
-// use isAdminAuthenticated middleware for all routes in this router
+// ── Public Admin Routes ──────────────────────────────────────────────────────
+adminRouter.post("/login", loginAdmin);
+adminRouter.get("/logout", logoutAdmin);
+adminRouter.post("/logout", logoutAdmin);
+
+// ── Protected Admin Routes ───────────────────────────────────────────────────
+// use isAdminAuthenticated middleware for all following routes
 adminRouter.use(isAdminAuthenticated);
 
-// All routes protected by isAdminAuthenticated
+adminRouter.get("/me", getAdminProfile);
 adminRouter.get("/dashboard/stats", getDashboardStats);
 
 adminRouter.get("/users", getAllUsers);
