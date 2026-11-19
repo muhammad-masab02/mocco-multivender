@@ -12,6 +12,11 @@ const initialState = {
     stats: null,
     statsLoading: false,
     statsError: null,
+
+    // All public sellers
+    allSellers: [],
+    allSellersLoading: false,
+    allSellersError: null,
 };
 
 const sellerSlice = createSlice({
@@ -63,6 +68,20 @@ const sellerSlice = createSlice({
             state.statsLoading = false;
             state.statsError = action.payload;
         },
+        // Public sellers list
+        getAllSellersRequest: (state) => {
+            state.allSellersLoading = true;
+            state.allSellersError = null;
+        },
+        getAllSellersSuccess: (state, action) => {
+            state.allSellersLoading = false;
+            state.allSellers = action.payload;
+            state.allSellersError = null;
+        },
+        getAllSellersFail: (state, action) => {
+            state.allSellersLoading = false;
+            state.allSellersError = action.payload;
+        },
         // Seller Logout Reducer
         sellerLogoutSuccess: (state) => {
             state.isLoading = false;
@@ -89,6 +108,9 @@ export const {
     fetchStatsRequest,
     fetchStatsSuccess,
     fetchStatsFail,
+    getAllSellersRequest,
+    getAllSellersSuccess,
+    getAllSellersFail,
     sellerLogoutSuccess,
     clearErrors
 } = sellerSlice.actions;

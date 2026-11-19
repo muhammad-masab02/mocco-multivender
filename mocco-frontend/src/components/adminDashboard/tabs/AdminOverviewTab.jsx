@@ -268,7 +268,7 @@ const AdminOverviewTab = () => {
 
           <button
             type="button"
-            onClick={() => navigate("/admin?tab=all-orders")}
+            onClick={() => navigate("/admin?tab=allOrders")}
             className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 hover:text-red-600 transition-colors self-start sm:self-auto cursor-pointer"
           >
             <span>View All Orders</span>

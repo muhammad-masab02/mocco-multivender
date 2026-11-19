@@ -456,6 +456,121 @@ const getDashboardStats = async (req, res, next) => {
     }
 };
 
+// get all public sellers list with aggregated stats
+const getAllSellersPublic = async (req, res, next) => {
+    try {
+        const { search, sort } = req.query;
+
+        let query = {};
+        if (search && String(search).trim()) {
+            const regex = new RegExp(escapeRegex(search.trim()), "i");
+            query = {
+                $or: [
+                    { name: regex },
+                    { description: regex },
+                    { addresses: regex },
+                ],
+            };
+        }
+
+        // Fetch all shops excluding sensitive auth/balance fields
+        const shops = await Shop.find(query)
+            .select("-password -availableBalance -resetPasswordToken -resetPasswordTime")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        if (!shops || shops.length === 0) {
+            return res.status(200).json({
+                success: true,
+                sellers: [],
+                totalSellers: 0,
+            });
+        }
+
+        const shopIds = shops.map((s) => s._id);
+
+        // Aggregate product stats (count, total sold, average rating) per shop
+        const [productStats, eventStats] = await Promise.all([
+            Product.aggregate([
+                { $match: { shop: { $in: shopIds } } },
+                {
+                    $group: {
+                        _id: "$shop",
+                        productCount: { $sum: 1 },
+                        totalSell: { $sum: { $ifNull: ["$total_sell", 0] } },
+                        avgProductRating: { $avg: { $ifNull: ["$rating", 0] } },
+                    },
+                },
+            ]),
+            Event.aggregate([
+                { $match: { shop: { $in: shopIds } } },
+                {
+                    $group: {
+                        _id: "$shop",
+                        eventCount: { $sum: 1 },
+                    },
+                },
+            ]),
+        ]);
+
+        const productMap = new Map();
+        productStats.forEach((stat) => {
+            productMap.set(String(stat._id), stat);
+        });
+
+        const eventMap = new Map();
+        eventStats.forEach((stat) => {
+            eventMap.set(String(stat._id), stat);
+        });
+
+        // Enrich sellers with aggregated metadata
+        let enrichedSellers = shops.map((shop) => {
+            const pStat = productMap.get(String(shop._id)) || {
+                productCount: 0,
+                totalSell: 0,
+                avgProductRating: 0,
+            };
+            const eStat = eventMap.get(String(shop._id)) || {
+                eventCount: 0,
+            };
+
+            const computedRating = shop.ratings || pStat.avgProductRating || 0;
+
+            return {
+                ...shop,
+                productCount: pStat.productCount,
+                totalSell: pStat.totalSell,
+                eventCount: eStat.eventCount,
+                ratings: Number(computedRating) ? Number(computedRating).toFixed(1) : "0.0",
+            };
+        });
+
+        // Optional server-side sorting if requested
+        if (sort === "products-desc") {
+            enrichedSellers.sort((a, b) => b.productCount - a.productCount);
+        } else if (sort === "rating-desc") {
+            enrichedSellers.sort((a, b) => Number(b.ratings) - Number(a.ratings));
+        } else if (sort === "sales-desc") {
+            enrichedSellers.sort((a, b) => b.totalSell - a.totalSell);
+        } else if (sort === "name-asc") {
+            enrichedSellers.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        } else if (sort === "oldest") {
+            enrichedSellers.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        }
+
+        res.status(200).json({
+            success: true,
+            sellers: enrichedSellers,
+            totalSellers: enrichedSellers.length,
+        });
+    } catch (error) {
+        console.error("Error in getAllSellersPublic:", error);
+        return next(
+            new ErrorHandler("Failed to fetch sellers list! " + error.message, 500)
+        );
+    }
+};
+
 export {
     registerShop,
     activateShopEmail,
@@ -465,4 +580,5 @@ export {
     logoutShop,
     updateSellerInfo,
     getDashboardStats,
+    getAllSellersPublic,
 };

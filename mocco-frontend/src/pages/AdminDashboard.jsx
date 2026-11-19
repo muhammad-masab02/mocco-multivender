@@ -13,7 +13,7 @@ const AdminDashboard = () => {
 
   const renderTab = () => {
     switch (tab) {
-      case "all-orders":
+      case "allOrders":
         return <AdminOrdersTab />;
       case "allUsers":
         return <AdminUsersTab />;

@@ -10,6 +10,9 @@ import {
     fetchStatsRequest,
     fetchStatsSuccess,
     fetchStatsFail,
+    getAllSellersRequest,
+    getAllSellersSuccess,
+    getAllSellersFail,
     sellerLogoutSuccess,
 } from "../slices/sellerAuthSlice";
 
@@ -92,5 +95,26 @@ export const logoutSeller = () => async (dispatch) => {
         dispatch(sellerLogoutSuccess());
         toast.success("Merchant session ended successfully");
         return { success: true };
+    }
+};
+
+export const getAllSellers = (params = {}) => async (dispatch) => {
+    try {
+        dispatch(getAllSellersRequest());
+        const queryParams = new URLSearchParams();
+        if (params.search) queryParams.set("search", params.search);
+        if (params.sort) queryParams.set("sort", params.sort);
+
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
+        const { data } = await axios.get(`${backendUrl}/shop/all-sellers${queryString}`);
+
+        dispatch(getAllSellersSuccess(data.sellers || []));
+        return data;
+    } catch (error) {
+        const message =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to fetch sellers list";
+        dispatch(getAllSellersFail(message));
     }
 };

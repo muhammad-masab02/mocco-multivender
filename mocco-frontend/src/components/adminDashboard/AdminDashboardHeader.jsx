@@ -32,7 +32,7 @@ const topIcons = [
     title: "Orders",
     icon: ShoppingBag,
     colorClass: "text-blue-600",
-    tabId: "all-orders",
+    tabId: "allOrders",
   },
   {
     title: "Users",

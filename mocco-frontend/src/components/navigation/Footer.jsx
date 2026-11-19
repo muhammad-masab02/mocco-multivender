@@ -183,6 +183,11 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/sellers" className="hover:text-white transition-colors">
+                  All Sellers
+                </Link>
+              </li>
+              <li>
                 <Link
                   to="/products?category=Computers%20and%20Laptops"
                   className="hover:text-white transition-colors"

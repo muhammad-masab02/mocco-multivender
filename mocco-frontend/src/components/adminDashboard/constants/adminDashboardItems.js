@@ -17,7 +17,7 @@ export const adminDashboardItems = [
     color: "blue",
   },
   {
-    id: "all-orders",
+    id: "allOrders",
     label: "All Orders",
     icon: ShoppingBag,
     color: "cyan",
@@ -29,7 +29,7 @@ export const adminDashboardItems = [
     color: "emerald",
   },
   {
-    id: "all-sellers",
+    id: "allSellers",
     label: "All Sellers",
     icon: Store,
     color: "orange",

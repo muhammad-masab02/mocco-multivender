@@ -44,6 +44,7 @@ import Home from "./pages/Home.jsx";
 import Contact from "./pages/Contact.jsx";
 import ShopDashboard from "./pages/ShopDashboard.jsx";
 import MyShop from "./pages/MyShop.jsx";
+import SellersPage from "./pages/SellersPage.jsx";
 import { Toaster } from "react-hot-toast";
 import {
   getWishlist,
@@ -218,6 +219,8 @@ function App() {
 
           <Route path="/best-selling" element={<BestSellingPage />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/sellers" element={<SellersPage />} />
+          <Route path="/all-sellers" element={<SellersPage />} />
 
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
