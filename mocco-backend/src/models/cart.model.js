@@ -4,8 +4,15 @@ const cartItemSchema = new Schema(
     {
         productId: {
             type: Schema.Types.ObjectId,
-            ref: "Product",
+            refPath: "items.itemModel",
             required: [true, "Product ID is required"],
+        },
+        // "Product" for normal products, "Event" for event products
+        // defaults to "Product" so legacy cart items are unaffected
+        itemModel: {
+            type: String,
+            enum: ["Product", "Event"],
+            default: "Product",
         },
         quantity: {
             type: Number,

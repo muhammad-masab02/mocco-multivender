@@ -134,10 +134,15 @@ export const ProductDetail = () => {
       }
     } else {
       const productObj = {
+        _id: currentProduct?._id || productId,
         productId,
         name: currentProduct?.name,
-        price: currentProduct?.discount_price || currentProduct?.price,
+        price: currentProduct?.price,
+        discount_price: currentProduct?.discount_price,
         images: currentProduct?.images,
+        stock: currentProduct?.stock ?? 99,
+        category: currentProduct?.category,
+        shop: currentProduct?.shop,
       };
 
       dispatch(addToGuestCartAction(productObj, quantity));

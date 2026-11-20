@@ -34,6 +34,7 @@ const Products = () => {
   const urlFilter = searchParams.get("filter");
   const urlCategory = searchParams.get("category");
   const isFeaturedFilter = urlFilter === "featured";
+  const isNewFilter = urlFilter === "new";
 
   const {
     products: storeProducts,
@@ -78,8 +79,14 @@ const Products = () => {
     if (isFeaturedFilter) {
       return Array.isArray(featuredProducts) ? featuredProducts : [];
     }
-    return Array.isArray(storeProducts) ? storeProducts : [];
-  }, [isFeaturedFilter, featuredProducts, storeProducts]);
+    const list = Array.isArray(storeProducts) ? [...storeProducts] : [];
+    if (isNewFilter) {
+      return list.sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+      );
+    }
+    return list;
+  }, [isFeaturedFilter, isNewFilter, featuredProducts, storeProducts]);
 
   // Dynamically compute categories and counts from available products
   const dynamicCategories = useMemo(() => {
@@ -134,8 +141,8 @@ const Products = () => {
     setSearchQuery("");
     setSortBy("default");
 
-    if (urlCategory) {
-      navigate(isFeaturedFilter ? "/products?filter=featured" : "/products", {
+    if (urlCategory || urlFilter) {
+      navigate("/products", {
         replace: true,
       });
     }
@@ -151,7 +158,9 @@ const Products = () => {
       inStockOnly ||
       onSaleOnly ||
       searchQuery.trim() !== "" ||
-      sortBy !== "default"
+      sortBy !== "default" ||
+      Boolean(isNewFilter) ||
+      Boolean(isFeaturedFilter)
     );
   }, [
     selectedCategory,
@@ -161,6 +170,8 @@ const Products = () => {
     onSaleOnly,
     searchQuery,
     sortBy,
+    isNewFilter,
+    isFeaturedFilter,
   ]);
 
   // Count active filters (for badge on mobile button)
@@ -172,6 +183,7 @@ const Products = () => {
     if (inStockOnly) count++;
     if (onSaleOnly) count++;
     if (searchQuery.trim() !== "") count++;
+    if (isNewFilter || isFeaturedFilter) count++;
     return count;
   }, [
     selectedCategory,
@@ -180,6 +192,8 @@ const Products = () => {
     inStockOnly,
     onSaleOnly,
     searchQuery,
+    isNewFilter,
+    isFeaturedFilter,
   ]);
 
   // Filter & Sort Pipeline
@@ -261,7 +275,7 @@ const Products = () => {
           return Number(b.total_sell || 0) - Number(a.total_sell || 0);
         }
 
-        if (sortBy === "newest") {
+        if (sortBy === "newest" || (isNewFilter && sortBy === "default")) {
           return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
         }
 
@@ -277,19 +291,24 @@ const Products = () => {
     onSaleOnly,
     searchQuery,
     sortBy,
+    isNewFilter,
   ]);
 
   const pageTitle = isFeaturedFilter
     ? "Featured Products"
-    : selectedCategory !== "all"
-      ? selectedCategory
-      : "All Products";
+    : isNewFilter
+      ? "New Arrival Products"
+      : selectedCategory !== "all"
+        ? selectedCategory
+        : "All Products";
 
   const pageDescription = isFeaturedFilter
     ? "Discover the most loved products promoted by our trusted sellers."
-    : selectedCategory !== "all"
-      ? `Browse curated ${selectedCategory.toLowerCase()} products from verified sellers.`
-      : "Explore our complete collection across all categories and find the perfect match for your needs.";
+    : isNewFilter
+      ? "Browse the freshest vendor arrivals and latest products on Mocco Mart."
+      : selectedCategory !== "all"
+        ? `Browse curated ${selectedCategory.toLowerCase()} products from verified sellers.`
+        : "Explore our complete collection across all categories and find the perfect match for your needs.";
 
   const handleClick = (productId) => {
     navigate(`/product-detail/${productId}`);
@@ -301,7 +320,11 @@ const Products = () => {
         {/* ── Page Header ──────────────────────────────────────────────────────── */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-500">
-            {isFeaturedFilter ? "Curated Picks" : "Marketplace Catalog"}
+            {isFeaturedFilter
+              ? "Curated Picks"
+              : isNewFilter
+                ? "Fresh Drops"
+                : "Marketplace Catalog"}
           </p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 capitalize">
             {pageTitle}
@@ -476,6 +499,46 @@ const Products = () => {
                   type="button"
                   onClick={() => setSearchQuery("")}
                   className="text-slate-400 hover:text-red-600 cursor-pointer"
+                >
+                  <X size={13} />
+                </button>
+              </span>
+            )}
+
+            {/* Filter: New Arrivals Chip */}
+            {isNewFilter && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 border border-red-200 text-red-600 shadow-xs">
+                <span>Filter: New Arrivals</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    searchParams.delete("filter");
+                    const newSearch = searchParams.toString();
+                    navigate(newSearch ? `/products?${newSearch}` : "/products", {
+                      replace: true,
+                    });
+                  }}
+                  className="text-red-400 hover:text-red-700 cursor-pointer"
+                >
+                  <X size={13} />
+                </button>
+              </span>
+            )}
+
+            {/* Filter: Featured Chip */}
+            {isFeaturedFilter && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 border border-red-200 text-red-600 shadow-xs">
+                <span>Filter: Featured</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    searchParams.delete("filter");
+                    const newSearch = searchParams.toString();
+                    navigate(newSearch ? `/products?${newSearch}` : "/products", {
+                      replace: true,
+                    });
+                  }}
+                  className="text-red-400 hover:text-red-700 cursor-pointer"
                 >
                   <X size={13} />
                 </button>

@@ -6,11 +6,25 @@ const orderSchema = new Schema({
         ref: "User",
         required: true
     },
+    shop: {
+        type: Schema.Types.ObjectId,
+        ref: "Shop",
+        index: true
+    },
     items: [{
         productId: {
             type: Schema.Types.ObjectId,
-            ref: "Product",
+            refPath: "items.itemModel",
             required: true
+        },
+        itemModel: {
+            type: String,
+            enum: ["Product", "Event"],
+            default: "Product"
+        },
+        sellerId: {
+            type: Schema.Types.ObjectId,
+            ref: "Shop"
         },
         quantity: {
             type: Number,

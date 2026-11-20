@@ -2,6 +2,7 @@ import catchAsyncErrors from "../middlewares/CatchAsyncErrors.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
 import Wishlist from "../models/wishlist.model.js";
 import Product from "../models/product.model.js";
+import Event from "../models/event.model.js";
 import mongoose from "mongoose";
 
 // Add product to wishlist
@@ -15,7 +16,10 @@ export const addToWishlist = catchAsyncErrors(async (req, res, next) => {
 
     const product = await Product.findById(productId);
     if (!product) {
-        return next(new ErrorHandler("Product not found", 404));
+        const event = await Event.findById(productId);
+        if (!event) {
+            return next(new ErrorHandler("Product not found", 404));
+        }
     }
 
     // Upsert to prevent duplicate entries efficiently
@@ -67,7 +71,24 @@ export const getWishlist = catchAsyncErrors(async (req, res, next) => {
         })
         .sort({ createdAt: -1 });
 
-    // Filter out items where the product might have been deleted from the database
+    // For wishlist items where productId didn't populate (it's an Event ID),
+    // fall back to querying the Event collection
+    const unpopulated = wishlist.filter(item => item.productId === null);
+    if (unpopulated.length > 0) {
+        const eventIds = unpopulated.map(item => item._doc?.productId || item.get("productId"));
+        const events = await Event.find({ _id: { $in: eventIds } })
+            .populate("shop", "name avatar");
+        const eventMap = {};
+        events.forEach(ev => { eventMap[ev._id.toString()] = ev; });
+        unpopulated.forEach(item => {
+            const rawId = item._doc?.productId || item.get("productId");
+            if (rawId && eventMap[rawId.toString()]) {
+                item.productId = eventMap[rawId.toString()];
+            }
+        });
+    }
+
+    // Filter out items where the product might have been deleted from both collections
     const validWishlist = wishlist.filter(item => item.productId !== null);
 
     res.status(200).json({
@@ -104,9 +125,15 @@ export const mergeWishlist = catchAsyncErrors(async (req, res, next) => {
         return res.status(200).json({ success: true, message: "No valid products to merge" });
     }
 
-    // Ensure products actually exist
-    const existingProducts = await Product.find({ _id: { $in: validIds } }).select("_id");
-    const existingProductIds = existingProducts.map(p => p._id.toString());
+    // Ensure items actually exist — check both Product and Event collections
+    const [existingProducts, existingEvents] = await Promise.all([
+        Product.find({ _id: { $in: validIds } }).select("_id"),
+        Event.find({ _id: { $in: validIds } }).select("_id"),
+    ]);
+    const existingProductIds = [
+        ...existingProducts.map(p => p._id.toString()),
+        ...existingEvents.map(e => e._id.toString()),
+    ];
 
     if (existingProductIds.length === 0) {
         return res.status(200).json({ success: true, message: "No matching products found to merge" });

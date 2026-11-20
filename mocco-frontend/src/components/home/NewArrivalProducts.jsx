@@ -83,7 +83,7 @@ const NewArrivalProducts = ({ productLoading, newArrivalProducts }) => {
 
         <button
           type="button"
-          onClick={() => navigate("/products")}
+          onClick={() => navigate("/products?filter=new")}
           className="group inline-flex items-center gap-2 self-start sm:self-auto px-5 py-2.5 rounded-full border border-slate-200 bg-white hover:bg-red-50 hover:border-red-200 text-sm font-bold text-slate-700 hover:text-red-600 transition-all duration-200 shadow-xs hover:shadow-sm"
         >
           <span>View all arrivals</span>

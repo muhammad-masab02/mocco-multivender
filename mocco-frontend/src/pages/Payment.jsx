@@ -124,12 +124,19 @@ const Payment = () => {
         );
       }
 
-      const orderItems = cartItems.map((item) => ({
-        productId: item.productId._id,
-        quantity: item.quantity,
-        price: item.productId.discount_price || item.productId.price,
-        sellerId: item.productId.shop?._id || item.productId.shop,
-      }));
+      const orderItems = cartItems.map((item) => {
+        const prod = item.productId || {};
+        const pId = prod._id || prod.id || prod.productId || item.productId;
+        const shopId = prod.shop?._id || prod.shop || item.shopId || item.sellerId;
+        const itemModel = item.itemModel || (prod.startDate || prod.endDate ? "Event" : "Product");
+        return {
+          productId: pId,
+          quantity: item.quantity,
+          price: Number(prod.discount_price || prod.price || item.price || 0),
+          sellerId: shopId,
+          itemModel,
+        };
+      });
 
       const config = {
         headers: { "Content-Type": "application/json" },

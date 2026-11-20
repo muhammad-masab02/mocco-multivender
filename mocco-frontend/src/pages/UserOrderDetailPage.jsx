@@ -286,9 +286,16 @@ const UserOrderDetailPage = () => {
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {name}
+                          </p>
+                          {(item.itemModel === "Event" || product?.startDate || product?.endDate) && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                              Event Deal
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-3 mt-1">
                           <span className="text-xs text-gray-400">
                             Qty: {item.quantity}

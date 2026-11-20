@@ -117,19 +117,24 @@ const getGuestCart = () => {
 };
 
 // product object is passed here so the UI has all data (price, image, name)
+// product._id is the canonical ID; product may also carry productId for compat
 const addToGuestCartAction = (product, quantity = 1) => (dispatch) => {
   const list = getGuestCart();
-  const existingIndex = list.findIndex(i => i.productId._id === product._id);
+  // Support both shapes: { _id } and { productId }
+  const id = product._id || product.productId;
+  const existingIndex = list.findIndex(
+    i => (i.productId._id || i.productId.productId || i.productId) === id
+  );
 
   if (existingIndex !== -1) {
     let newQty = list[existingIndex].quantity + quantity;
-    if (newQty > product.stock) {
+    if (product.stock != null && newQty > product.stock) {
       toast.error(`Only ${product.stock} items left in stock`);
       return;
     }
     list[existingIndex].quantity = newQty;
   } else {
-    if (quantity > product.stock) {
+    if (product.stock != null && quantity > product.stock) {
       toast.error(`Only ${product.stock} items left in stock`);
       return;
     }
