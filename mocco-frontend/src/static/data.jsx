@@ -203,76 +203,80 @@ export const brandingData = [
   },
 ];
 
-// categories data
+// categories data - 6 Main Categories from finalized Mocco Mart taxonomy
 export const categoriesData = [
   {
     id: 1,
-    title: "Computers and Laptops",
-    subTitle: "",
+    title: "Electronics & Technology",
+    subTitle: "Mobiles, Laptops, Audio & Gadgets",
     image_Url:
-      "https://cdn.shopify.com/s/files/1/1706/9177/products/NEWAppleMacbookProwithM1ProChip14InchLaptop2021ModelMKGQ3LL_A_16GB_1TBSSD_custommacbd.jpg?v=1659592838",
+      "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&auto=format&fit=crop&q=80",
+    subcategories: [
+      "Mobile Phones & Accessories",
+      "Computers & Laptops",
+      "Headphones & Audio",
+      "Smart Gadgets",
+      "Computer Accessories",
+    ],
   },
   {
     id: 2,
-    title: "cosmetics and body care",
-    subTitle: "",
+    title: "Fashion",
+    subTitle: "Women's, Men's & Kids' Apparel",
     image_Url:
-      "https://indian-retailer.s3.ap-south-1.amazonaws.com/s3fs-public/2021-07/kosme1.png",
+      "https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&auto=format&fit=crop&q=80",
+    subcategories: [
+      "Women's Fashion",
+      "Men's Fashion",
+      "Girls' Fashion",
+      "Boys' Fashion",
+    ],
   },
   {
     id: 3,
-    title: "Accesories",
-    subTitle: "",
+    title: "Home & Kitchen",
+    subTitle: "Kitchenware, Décor, Storage & Bedding",
     image_Url:
-      "https://img.freepik.com/free-vector/ordering-goods-online-internet-store-online-shopping-niche-e-commerce-website-mother-buying-babies-clothes-footwear-toys-infant-accessories_335657-2345.jpg?w=2000",
+      "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&auto=format&fit=crop&q=80",
+    subcategories: [
+      "Kitchen & Dining",
+      "Home Décor",
+      "Home Storage & Organization",
+      "Bedding & Bath",
+    ],
   },
   {
     id: 4,
-    title: "Cloths",
-    subTitle: "",
+    title: "Beauty & Personal Care",
+    subTitle: "Skincare, Makeup, Hair & Fragrances",
     image_Url:
-      "https://www.shift4shop.com/2015/images/industries/clothing/clothing-apparel.png",
+      "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&auto=format&fit=crop&q=80",
+    subcategories: [
+      "Skincare",
+      "Makeup & Cosmetics",
+      "Hair Care",
+      "Fragrance & Personal Care",
+    ],
   },
   {
     id: 5,
-    title: "Shoes",
-    subTitle: "",
+    title: "Sports & Outdoors",
+    subTitle: "Fitness, Equipment & Outdoor Gear",
     image_Url:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQvBQPQMVNRd6TtDkGs2dCri0Y-rxKkFOiEWw&usqp=CAU",
+      "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80",
+    subcategories: ["Fitness & Gym", "Sports Equipment", "Outdoor & Travel"],
   },
   {
     id: 6,
-    title: "Gifts",
-    subTitle: "",
+    title: "Toys & Games",
+    subTitle: "Educational, Playsets & Puzzles",
     image_Url:
-      "https://securecdn.pymnts.com/wp-content/uploads/2014/11/Gifts-Photo-700x489.jpg",
-  },
-  {
-    id: 7,
-    title: "Pet Care",
-    subTitle: "",
-    image_Url: "https://cdn.openpr.com/T/c/Tc15444071_g.jpg",
-  },
-  {
-    id: 8,
-    title: "Mobile and Tablets",
-    subTitle: "",
-    image_Url:
-      "https://st-troy.mncdn.com/mnresize/1500/1500/Content/media/ProductImg/original/mpwp3tua-apple-iphone-14-256gb-mavi-mpwp3tua-637986832343472449.jpg",
-  },
-  {
-    id: 9,
-    title: "Music and Gaming",
-    subTitle: "",
-    image_Url:
-      "https://static.vecteezy.com/system/resources/previews/011/996/555/original/3d-black-headphone-illustration-ecommerce-icon-png.png",
-  },
-  {
-    id: 10,
-    title: "Others",
-    subTitle: "",
-    image_Url:
-      "https://searchspring.com/wp-content/uploads/2022/10/Hero-Image-Platform-Others-2.png",
+      "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=600&auto=format&fit=crop&q=80",
+    subcategories: [
+      "Educational & Learning Toys",
+      "Toys & Playsets",
+      "Games & Puzzles",
+    ],
   },
 ];
 
@@ -280,7 +284,10 @@ export const categoriesData = [
 export const productData = [
   {
     id: 1,
-    category: "Computers and Laptops",
+    category: "Laptops",
+    mainCategory: "Electronics & Technology",
+    subCategory: "Computers & Laptops",
+    categoryPath: "Electronics & Technology > Computers & Laptops > Laptops",
     name: "MacBook pro M2 chipset 256gb ssd 8gb ram space-gray color with apple 1 year warranty",
     description:
       "Product details are a crucial part of any eCommerce website or online marketplace. These details help the potential customers to make an informed decision about the product they are interested in buying. A well-written product description can also be a powerful marketing tool that can help to increase sales.Product details typically include information about the product's features, specifications, dimensions, weight, materials, and other relevant information that can help customers to understand the product better. The product details section should also include high-quality images and videos of the product, as well as customer reviews and ratings.",
@@ -310,7 +317,10 @@ export const productData = [
   },
   {
     id: 2,
-    category: "Mobile and Tablets",
+    category: "Smartphones",
+    mainCategory: "Electronics & Technology",
+    subCategory: "Mobile Phones & Accessories",
+    categoryPath: "Electronics & Technology > Mobile Phones & Accessories > Smartphones",
     name: "Iphone 14 pro max 256 gb ssd and 8 gb ram silver colour",
     description:
       "Product details are a crucial part of any eCommerce website or online marketplace. These details help the potential customers to make an informed decision about the product they are interested in buying. A well-written product description can also be a powerful marketing tool that can help to increase sales.Product details typically include information about the product's features, specifications, dimensions, weight, materials, and other relevant information that can help customers to understand the product better. The product details section should also include high-quality images and videos of the product, as well as customer reviews and ratings.",
@@ -340,7 +350,10 @@ export const productData = [
   },
   {
     id: 3,
-    category: "Computers and Laptop",
+    category: "Laptops",
+    mainCategory: "Electronics & Technology",
+    subCategory: "Computers & Laptops",
+    categoryPath: "Electronics & Technology > Computers & Laptops > Laptops",
     name: "MacBook pro M2 chipset 256gb ssd 8gb ram space gray color with apple 1 year warranty",
     description:
       "Product details are a crucial part of any eCommerce website or online marketplace. These details help the potential customers to make an informed decision about the product they are interested in buying. A well-written product description can also be a powerful marketing tool that can help to increase sales.Product details typically include information about the product's features, specifications, dimensions, weight, materials, and other relevant information that can help customers to understand the product better. The product details section should also include high-quality images and videos of the product, as well as customer reviews and ratings.",
@@ -466,7 +479,10 @@ export const productData = [
     ],
     total_sell: 20,
     stock: 10,
-    category: "Music and Gaming",
+    category: "Gaming Headsets",
+    mainCategory: "Electronics & Technology",
+    subCategory: "Headphones & Audio",
+    categoryPath: "Electronics & Technology > Headphones & Audio > Gaming Headsets",
   },
   {
     id: 7,
@@ -537,7 +553,10 @@ export const productData = [
   },
   {
     id: 9,
-    category: "Mobile and Tablets",
+    category: "Smartphones",
+    mainCategory: "Electronics & Technology",
+    subCategory: "Mobile Phones & Accessories",
+    categoryPath: "Electronics & Technology > Mobile Phones & Accessories > Smartphones",
     name: "Iphone 14 pro max 256 gb ssd and 8 gb ram silver colour",
     description:
       "Product details are a crucial part of any eCommerce website or online marketplace. These details help the potential customers to make an informed decision about the product they are interested in buying. A well-written product description can also be a powerful marketing tool that can help to increase sales.Product details typically include information about the product's features, specifications, dimensions, weight, materials, and other relevant information that can help customers to understand the product better. The product details section should also include high-quality images and videos of the product, as well as customer reviews and ratings.",
@@ -567,7 +586,10 @@ export const productData = [
   },
   {
     id: 10,
-    category: "Music and Gaming",
+    category: "Gaming Headsets",
+    mainCategory: "Electronics & Technology",
+    subCategory: "Headphones & Audio",
+    categoryPath: "Electronics & Technology > Headphones & Audio > Gaming Headsets",
     name: "Gaming Headphone Asus with mutiple color and free delivery",
     description:
       "Product details are a crucial part of any eCommerce website or online marketplace. These details help the potential customers to make an informed decision about the product they are interested in buying. A well-written product description can also be a powerful marketing tool that can help to increase sales.Product details typically include information about the product's features, specifications, dimensions, weight, materials, and other relevant information that can help customers to understand the product better. The product details section should also include high-quality images and videos of the product, as well as customer reviews and ratings.",
@@ -702,7 +724,5 @@ export const brandLogosList = [
   "https://logos-world.net/wp-content/uploads/2020/08/Dell-Logo-1989-2016.png",
   "https://s.yimg.com/fz/api/res/1.2/.9XQiCV77OrqWsquSzVjCA--~C/YXBwaWQ9c3JjaGRkO2ZpPWZpbGw7aD00MTI7cHhvZmY9NTA7cHlvZmY9MTAwO3E9ODA7c3M9MTt3PTM4OA--/https://i.pinimg.com/736x/a8/5d/91/a85d91d6c7be00d65712fc20f1a479e6.jpg",
   "https://tse1.mm.bing.net/th/id/OIP.L1qMVdbzQJT-RLfZEl7gdAHaD6?pid=Api&P=0&h=220",
-  "https://tse4.mm.bing.net/th/id/OIP.qbsTDbB9qKP6pBQ0Rl9bpQHaEK?pid=Api&P=0&h=220"
+  "https://tse4.mm.bing.net/th/id/OIP.qbsTDbB9qKP6pBQ0Rl9bpQHaEK?pid=Api&P=0&h=220",
 ];
-
-

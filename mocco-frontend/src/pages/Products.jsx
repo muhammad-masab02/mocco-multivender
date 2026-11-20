@@ -41,6 +41,7 @@ const Products = () => {
     featuredProducts,
     isLoading: productLoading,
   } = useSelector((state) => state.product);
+  const { categoriesTree } = useSelector((state) => state.category || {});
 
   // Filter States
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -88,28 +89,119 @@ const Products = () => {
     return list;
   }, [isFeaturedFilter, isNewFilter, featuredProducts, storeProducts]);
 
-  // Dynamically compute categories and counts from available products
+  // Lookup map to resolve hierarchy for any category string
+  const categoryHierarchyMap = useMemo(() => {
+    const map = new Map();
+
+    const legacyAliases = {
+      "computers and laptops": { main: "Electronics & Technology", sub: "Computers & Laptops", item: "Laptops" },
+      "computers and laptop": { main: "Electronics & Technology", sub: "Computers & Laptops", item: "Laptops" },
+      "mobile and tablets": { main: "Electronics & Technology", sub: "Mobile Phones & Accessories", item: "Smartphones" },
+      "music and gaming": { main: "Electronics & Technology", sub: "Headphones & Audio", item: "Headphones" },
+      "others": { main: "Electronics & Technology", sub: "Smart Gadgets", item: "Smart Gadgets" },
+      "cloths": { main: "Fashion", sub: "Women's Fashion", item: "Clothing" },
+      "cosmetics and body care": { main: "Beauty & Personal Care", sub: "Skincare", item: "Moisturizers & Creams" },
+      "accesories": { main: "Fashion", sub: "Women's Fashion", item: "Accessories" },
+    };
+    Object.entries(legacyAliases).forEach(([k, v]) => {
+      map.set(k.toLowerCase(), v);
+    });
+
+    const tree = categoriesTree?.length
+      ? categoriesTree
+      : categoriesData.map((c) => ({
+          name: c.title,
+          subcategories: c.subcategories?.map((s) => ({ name: s, categories: [] })) || [],
+        }));
+
+    tree.forEach((main) => {
+      const mainName = main.name.toLowerCase();
+      map.set(mainName, { main: main.name, sub: "", item: "" });
+
+      const subList = main.children || main.subcategories || [];
+      subList.forEach((sub) => {
+        const subTitle = sub.name || sub;
+        const subName = subTitle.toLowerCase();
+        map.set(subName, { main: main.name, sub: subTitle, item: "" });
+
+        const catList = sub.children || sub.categories || [];
+        catList.forEach((item) => {
+          const itemTitle = item.name || item;
+          const itemName = itemTitle.toLowerCase();
+          map.set(itemName, { main: main.name, sub: subTitle, item: itemTitle });
+        });
+      });
+    });
+
+    return map;
+  }, [categoriesTree]);
+
+  // Dynamically compute hierarchical category tree with counts from available products
   const dynamicCategories = useMemo(() => {
-    const counts = {};
-    baseProducts.forEach((p) => {
-      const cat = p.category ? p.category.trim() : "Uncategorized";
-      const key = cat.toLowerCase();
-      if (!counts[key]) {
-        counts[key] = { title: cat, count: 0 };
-      }
-      counts[key].count += 1;
-    });
+    const tree = categoriesTree?.length
+      ? categoriesTree
+      : categoriesData.map((c) => ({
+          _id: c.id,
+          name: c.title,
+          subcategories: c.subcategories?.map((s) => ({ name: s, categories: [] })) || [],
+        }));
 
-    // Also include categoriesData titles if missing
-    categoriesData.forEach((c) => {
-      const key = c.title.toLowerCase();
-      if (!counts[key]) {
-        counts[key] = { title: c.title, count: 0 };
-      }
-    });
+    return tree.map((main) => {
+      const mainName = main.name;
+      const subList = main.children || main.subcategories || [];
 
-    return Object.values(counts).sort((a, b) => b.count - a.count);
-  }, [baseProducts]);
+      // Subcategories with their individual counts
+      const subcategoriesWithCounts = subList.map((sub) => {
+        const subTitle = sub.name || sub;
+        const subKey = subTitle.toLowerCase();
+
+        const count = baseProducts.filter((p) => {
+          const pSub = (p.subCategory || "").toLowerCase();
+          const pCat = (p.category || "").toLowerCase();
+          const pPath = (p.categoryPath || "").toLowerCase();
+          const hierarchy = categoryHierarchyMap.get(pCat);
+
+          return (
+            pSub === subKey ||
+            (hierarchy?.sub && hierarchy.sub.toLowerCase() === subKey) ||
+            pCat === subKey ||
+            pPath.includes(subKey)
+          );
+        }).length;
+
+        return {
+          id: sub._id || subTitle,
+          title: subTitle,
+          count,
+        };
+      });
+
+      // Total count for Main Category
+      const mainKey = mainName.toLowerCase();
+      const mainCount = baseProducts.filter((p) => {
+        const pMain = (p.mainCategory || "").toLowerCase();
+        const pSub = (p.subCategory || "").toLowerCase();
+        const pCat = (p.category || "").toLowerCase();
+        const pPath = (p.categoryPath || "").toLowerCase();
+        const hierarchy = categoryHierarchyMap.get(pCat);
+
+        return (
+          pMain === mainKey ||
+          (hierarchy?.main && hierarchy.main.toLowerCase() === mainKey) ||
+          pCat === mainKey ||
+          pSub === mainKey ||
+          pPath.includes(mainKey)
+        );
+      }).length;
+
+      return {
+        id: main._id || mainName,
+        title: mainName,
+        count: mainCount,
+        subcategories: subcategoriesWithCounts,
+      };
+    });
+  }, [baseProducts, categoriesTree, categoryHierarchyMap]);
 
   // Handle Category selection
   const handleSelectCategory = (categoryTitle) => {
@@ -200,10 +292,28 @@ const Products = () => {
   const filteredProducts = useMemo(() => {
     return baseProducts
       .filter((product) => {
-        // 1. Category Filter
+        // 1. Category Filter (supports 3-level matching: category, mainCategory, subCategory, or categoryPath)
         if (selectedCategory !== "all") {
-          const productCat = (product.category || "").toLowerCase();
-          if (productCat !== selectedCategory.toLowerCase()) {
+          const sel = selectedCategory.toLowerCase();
+          const pCat = (product.category || "").toLowerCase();
+          const pMain = (product.mainCategory || "").toLowerCase();
+          const pSub = (product.subCategory || "").toLowerCase();
+          const pPath = (product.categoryPath || "").toLowerCase();
+
+          // Lookup parent info for legacy products
+          const hierarchy = categoryHierarchyMap.get(pCat);
+          const resolvedMain = (pMain || hierarchy?.main || "").toLowerCase();
+          const resolvedSub = (pSub || hierarchy?.sub || "").toLowerCase();
+
+          const matchesCat =
+            pCat === sel ||
+            pMain === sel ||
+            pSub === sel ||
+            resolvedMain === sel ||
+            resolvedSub === sel ||
+            pPath.includes(sel);
+
+          if (!matchesCat) {
             return false;
           }
         }
@@ -249,7 +359,11 @@ const Products = () => {
             .toLowerCase()
             .includes(q);
           const matchShop = (product.shop?.name || "").toLowerCase().includes(q);
-          const matchCat = (product.category || "").toLowerCase().includes(q);
+          const matchCat =
+            (product.category || "").toLowerCase().includes(q) ||
+            (product.mainCategory || "").toLowerCase().includes(q) ||
+            (product.subCategory || "").toLowerCase().includes(q) ||
+            (product.categoryPath || "").toLowerCase().includes(q);
           if (!matchName && !matchDesc && !matchShop && !matchCat) {
             return false;
           }

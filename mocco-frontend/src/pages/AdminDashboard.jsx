@@ -6,6 +6,7 @@ import AdminSellersTab from "../components/adminDashboard/tabs/AdminSellersTab";
 import AdminProductsTab from "../components/adminDashboard/tabs/AdminProductsTab";
 import AdminEventsTab from "../components/adminDashboard/tabs/AdminEventsTab";
 import AdminWithdrawTab from "../components/adminDashboard/tabs/AdminWithdrawTab";
+import AdminCategoriesTab from "../components/adminDashboard/tabs/AdminCategoriesTab";
 
 const AdminDashboard = () => {
   const location = useLocation();
@@ -23,6 +24,8 @@ const AdminDashboard = () => {
         return <AdminProductsTab />;
       case "allEvents":
         return <AdminEventsTab />;
+      case "categories":
+        return <AdminCategoriesTab />;
       case "withdraw":
         return <AdminWithdrawTab />;
       default:

@@ -106,6 +106,9 @@ const createProduct = catchAsyncErrors(async (req, res, next) => {
             name,
             description,
             category,
+            mainCategory,
+            subCategory,
+            categoryPath,
             tags,
             stock,
             price,
@@ -135,12 +138,21 @@ const createProduct = catchAsyncErrors(async (req, res, next) => {
         const uploadPromises = req.files.map(file => uploadToCloudinary(file, "mocco/products"));
         const images = await Promise.all(uploadPromises);
 
+        let computedPath = categoryPath;
+        if (!computedPath && category) {
+            const parts = [mainCategory, subCategory, category].filter(Boolean);
+            computedPath = parts.join(" > ");
+        }
+
         // Create product
         const product = await Product.create({
             name,
             description,
             category,
-            tags: tags ? tags.split(",") : [],
+            mainCategory: mainCategory || "",
+            subCategory: subCategory || "",
+            categoryPath: computedPath || "",
+            tags: tags ? (Array.isArray(tags) ? tags : tags.split(",")) : [],
             stock,
             price,
             discount_price,
@@ -294,6 +306,9 @@ const searchProducts = catchAsyncErrors(async (req, res, next) => {
                     $or: [
                         { name: regex },
                         { category: regex },
+                        { subCategory: regex },
+                        { mainCategory: regex },
+                        { categoryPath: regex },
                         { tags: { $in: [regex] } }
                     ]
                 }).populate("shop", "name avatar").limit(10),
@@ -301,6 +316,9 @@ const searchProducts = catchAsyncErrors(async (req, res, next) => {
                     $or: [
                         { name: regex },
                         { category: regex },
+                        { subCategory: regex },
+                        { mainCategory: regex },
+                        { categoryPath: regex },
                         { tags: { $in: [regex] } }
                     ]
                 }).populate("shop", "name avatar").limit(10)
@@ -380,6 +398,9 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
             name,
             description,
             category,
+            mainCategory,
+            subCategory,
+            categoryPath,
             tags,
             stock,
             price,
@@ -390,6 +411,18 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
         if (name) product.name = name;
         if (description) product.description = description;
         if (category) product.category = category;
+        if (mainCategory !== undefined) product.mainCategory = mainCategory;
+        if (subCategory !== undefined) product.subCategory = subCategory;
+        if (categoryPath !== undefined) {
+            product.categoryPath = categoryPath;
+        } else if (category || mainCategory || subCategory) {
+            const parts = [
+                mainCategory !== undefined ? mainCategory : product.mainCategory,
+                subCategory !== undefined ? subCategory : product.subCategory,
+                category !== undefined ? category : product.category,
+            ].filter(Boolean);
+            product.categoryPath = parts.join(" > ");
+        }
         if (tags) product.tags = typeof tags === "string" ? tags.split(",").map(t => t.trim()) : tags;
         if (stock !== undefined && stock !== null) product.stock = Number(stock);
         if (price !== undefined && price !== null) product.price = Number(price);

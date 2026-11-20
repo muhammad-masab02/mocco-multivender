@@ -18,6 +18,7 @@ import conversationRouter from "./src/routes/conversation.route.js";
 import messageRouter from "./src/routes/message.route.js";
 import adminRouter from "./src/routes/admin.route.js";
 import withdrawRouter from "./src/routes/withdraw.route.js";
+import categoryRouter from "./src/routes/category.route.js";
 
 const app = express();
 
@@ -96,6 +97,7 @@ app.use("/api/v1/conversation", conversationRouter);
 app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/withdraw", withdrawRouter);
+app.use("/api/v1/category", categoryRouter);
 
 app.use(errorMiddleware);
 

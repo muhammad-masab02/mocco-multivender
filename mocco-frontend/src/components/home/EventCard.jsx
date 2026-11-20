@@ -67,7 +67,11 @@ const getCardData = (eventProduct = {}) => {
   const secondaryImage = secondaryRaw ? getImageUrl(secondaryRaw) : null;
 
   const title = eventProduct?.name || "Event Product";
-  const category = eventProduct?.category || "Special Offer";
+  const category =
+    eventProduct?.category ||
+    eventProduct?.subCategory ||
+    eventProduct?.mainCategory ||
+    "Special Offer";
   const shortDescription =
     eventProduct?.description?.slice(0, 140) ||
     "Limited-time promotional event with exclusive savings and verified stock.";

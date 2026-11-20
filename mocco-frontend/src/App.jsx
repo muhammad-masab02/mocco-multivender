@@ -52,6 +52,7 @@ import {
 } from "./services/store/actions/wishlist.js";
 import { getAllProducts } from "./services/store/actions/product.js";
 import { getAllEvents } from "./services/store/actions/event.js";
+import { getCategoryTree } from "./services/store/actions/category.js";
 import ScrollToTop from "./components/common/ScrollToTop.jsx";
 import axios from "axios";
 import { backendUrl } from "./components/myShop/utils.js";
@@ -96,6 +97,7 @@ function App() {
 
     dispatch(getAllEvents());
     dispatch(getAllProducts());
+    dispatch(getCategoryTree());
 
     dispatch(initGuestWishlist());
     dispatch(initGuestCart());

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createCoupon } from "../../../services/store/actions/coupon";
+import { categoriesData } from "../../../static/data";
 
 const CouponForm = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +18,7 @@ const CouponForm = () => {
   const dispatch = useDispatch();
   const { products } = useSelector((state) => state.product);
   const { isLoading: isCouponLoading } = useSelector((state) => state.coupon);
+  const { categoriesTree } = useSelector((state) => state.category || {});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -79,12 +81,9 @@ const CouponForm = () => {
     }
   };
 
-  const categories = [
-    "Computers and Laptops",
-    "Mobile and Tablets",
-    "Music and Gaming",
-    "Others",
-  ];
+  const categoryOptions = categoriesTree?.length
+    ? categoriesTree
+    : categoriesData.map((c) => ({ name: c.title, children: [] }));
 
   return (
     <form
@@ -164,10 +163,15 @@ const CouponForm = () => {
               className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
             >
               <option value="">Select Category</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
+              {categoryOptions.map((main) => (
+                <optgroup key={main._id || main.name} label={main.name}>
+                  <option value={main.name}>{main.name} (All)</option>
+                  {(main.children || main.subcategories)?.map((sub) => (
+                    <option key={sub._id || sub.name} value={sub.name}>
+                      -- {sub.name}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
             {errors.categoryId && (

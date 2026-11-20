@@ -109,7 +109,7 @@ function Home() {
 
   // handle category click and navigate
   const handleCategoryClick = (category) => {
-    navigate(`products?category=${category.toLowerCase()}`);
+    navigate(`/products?category=${encodeURIComponent(category.toLowerCase())}`);
   };
 
   const handleClick = (productId) => {

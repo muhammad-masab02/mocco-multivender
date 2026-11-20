@@ -2,17 +2,12 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { updateCoupon } from "../../../services/store/actions/coupon";
-
-const categories = [
-  "Computers and Laptops",
-  "Mobile and Tablets",
-  "Music and Gaming",
-  "Others",
-];
+import { categoriesData } from "../../../static/data";
 
 const EditCouponModal = ({ coupon, onClose, onSuccess }) => {
   const dispatch = useDispatch();
   const { products } = useSelector((state) => state.product);
+  const { categoriesTree } = useSelector((state) => state.category || {});
 
   const [formData, setFormData] = useState({
     code: coupon?.code || "",
@@ -20,7 +15,7 @@ const EditCouponModal = ({ coupon, onClose, onSuccess }) => {
     minAmount: coupon?.minAmount ?? "",
     maxAmount: coupon?.maxAmount ?? "",
     productId: coupon?.product?._id || coupon?.product || "",
-    categoryId: coupon?.category || categories[0],
+    categoryId: coupon?.category || "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -140,10 +135,16 @@ const EditCouponModal = ({ coupon, onClose, onSuccess }) => {
                 onChange={handleChange}
                 className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-sky-500"
               >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
+                <option value="">Select Category</option>
+                {(categoriesTree?.length ? categoriesTree : categoriesData.map(c => ({ name: c.title, children: [] }))).map((main) => (
+                  <optgroup key={main._id || main.name} label={main.name}>
+                    <option value={main.name}>{main.name} (All)</option>
+                    {(main.children || main.subcategories)?.map((sub) => (
+                      <option key={sub._id || sub.name} value={sub.name}>
+                        -- {sub.name}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>

@@ -62,7 +62,7 @@ const slidesData = [
       "From ultra-light performance laptops and flagship smartphones to immersive noise-cancelling headphones and smart wearables, curated directly from top electronics vendors.",
     primaryBtn: {
       text: "Shop Electronics",
-      url: "/products?category=computers%20and%20laptops",
+      url: "/products?category=electronics%20%26%20technology",
       className:
         "bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-600/30",
     },
@@ -106,13 +106,13 @@ const slidesData = [
       "Discover trendsetting apparel, handcrafted leather goods, and seasonal boutique drops designed by independent fashion creators worldwide.",
     primaryBtn: {
       text: "Explore Fashion Drops",
-      url: "/products?category=cloths",
+      url: "/products?category=fashion",
       className:
         "bg-white hover:bg-neutral-100 text-neutral-900 font-bold shadow-lg shadow-black/25",
     },
     secondaryBtn: {
-      text: "Browse Accessories",
-      url: "/products?category=accesories",
+      text: "Browse Tech",
+      url: "/products?category=electronics%20%26%20technology",
       className:
         "border border-white/40 bg-white/10 hover:bg-white/20 text-white font-semibold backdrop-blur-md",
     },

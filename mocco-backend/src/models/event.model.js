@@ -13,6 +13,22 @@ const eventSchema = new Schema(
         category: {
             type: String,
             required: [true, "Please enter event product category!"],
+            trim: true,
+        },
+        mainCategory: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+        subCategory: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+        categoryPath: {
+            type: String,
+            trim: true,
+            default: "",
         },
         startDate: {
             type: Date,
@@ -86,6 +102,10 @@ const eventSchema = new Schema(
         //     required: true,
         // }
     }, { timestamps: true });
+
+eventSchema.index({ category: 1 });
+eventSchema.index({ mainCategory: 1 });
+eventSchema.index({ subCategory: 1 });
 
 const Event = mongoose.model("Event", eventSchema);
 

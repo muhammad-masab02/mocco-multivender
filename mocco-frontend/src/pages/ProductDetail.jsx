@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import ProductDetailInfo from "../components/common/products/ProductDetailInfo";
 import { getImageUrl } from "../utils/imageUrl.js";
 import { useNavigate, useParams, Link } from "react-router-dom";
@@ -44,6 +44,7 @@ export const ProductDetail = () => {
   const { isUserAuthenticated, user } = useSelector((state) => state.user);
   const { isLoading: isCartLoading } = useSelector((state) => state.cart);
   const { ids: wishlistIds } = useSelector((state) => state.wishlist);
+  const { categoriesTree } = useSelector((state) => state.category || {});
 
   const isWishlisted = wishlistIds.includes(productId);
 
@@ -55,6 +56,46 @@ export const ProductDetail = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+
+  // Dynamic 3-level category hierarchy resolution
+  const categoryCrumbs = useMemo(() => {
+    let main = currentProduct?.mainCategory || "";
+    let sub = currentProduct?.subCategory || "";
+    let cat = currentProduct?.category || "";
+
+    if ((!main || !sub) && cat && categoriesTree?.length) {
+      const catLower = cat.trim().toLowerCase();
+      for (const m of categoriesTree) {
+        if (m.name.toLowerCase() === catLower) {
+          main = m.name;
+          cat = "";
+          break;
+        }
+        if (m.children) {
+          for (const s of m.children) {
+            if (s.name.toLowerCase() === catLower) {
+              main = m.name;
+              sub = s.name;
+              cat = "";
+              break;
+            }
+            if (s.children) {
+              for (const p of s.children) {
+                if (p.name.toLowerCase() === catLower) {
+                  main = m.name;
+                  sub = s.name;
+                  cat = p.name;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return { main, sub, cat };
+  }, [currentProduct, categoriesTree]);
 
   // Fetch single product dynamically
   useEffect(() => {
@@ -127,7 +168,7 @@ export const ProductDetail = () => {
 
     if (isEnded) {
       toast.error(
-        "This promotional event has concluded and is no longer available for purchase."
+        "This promotional event has concluded and is no longer available for purchase.",
       );
       return;
     }
@@ -259,7 +300,8 @@ export const ProductDetail = () => {
           Product Not Found
         </h1>
         <p className="text-slate-500 mb-8 max-w-md mx-auto text-sm leading-relaxed">
-          The product you are looking for may have been removed, sold out, or the link is expired.
+          The product you are looking for may have been removed, sold out, or
+          the link is expired.
         </p>
         <button
           type="button"
@@ -275,17 +317,17 @@ export const ProductDetail = () => {
 
   // Process Images
   const rawImages = currentProduct?.images || [];
-  const imageList = Array.isArray(rawImages) && rawImages.length > 0
-    ? rawImages.map((img) => getImageUrl(img?.url || img))
-    : [
-        getImageUrl(
-          currentProduct?.image_Url?.[0]?.url || currentProduct?.image_Url,
-          "https://dummyimage.com/600x600/f1f5f9/94a3b8.png&text=Product",
-        ),
-      ];
+  const imageList =
+    Array.isArray(rawImages) && rawImages.length > 0
+      ? rawImages.map((img) => getImageUrl(img?.url || img))
+      : [
+          getImageUrl(
+            currentProduct?.image_Url?.[0]?.url || currentProduct?.image_Url,
+            "https://dummyimage.com/600x600/f1f5f9/94a3b8.png&text=Product",
+          ),
+        ];
 
-  const currentDisplayImage =
-    imageList[selectedImageIndex] || imageList[0];
+  const currentDisplayImage = imageList[selectedImageIndex] || imageList[0];
 
   // Pricing calculations
   const regularPrice = Number(currentProduct?.price || 0);
@@ -300,12 +342,13 @@ export const ProductDetail = () => {
     ? currentProduct.reviews
     : [];
   const totalReviewsCount = productReviews.length;
-  const averageRating = totalReviewsCount > 0
-    ? (
-        productReviews.reduce((acc, r) => acc + Number(r?.rating || 0), 0) /
-        totalReviewsCount
-      ).toFixed(1)
-    : Number(currentProduct?.rating || 0).toFixed(1);
+  const averageRating =
+    totalReviewsCount > 0
+      ? (
+          productReviews.reduce((acc, r) => acc + Number(r?.rating || 0), 0) /
+          totalReviewsCount
+        ).toFixed(1)
+      : Number(currentProduct?.rating || 0).toFixed(1);
 
   // Review breakdown distribution
   const ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -342,17 +385,54 @@ export const ProductDetail = () => {
               Products
             </Link>
           </li>
-          {currentProduct?.category && (
+          {/* 3-Level Dynamic Breadcrumbs */}
+          {categoryCrumbs.main && (
             <>
               <li className="text-slate-300">
                 <ChevronRight className="w-3.5 h-3.5" />
               </li>
               <li>
                 <Link
-                  to={`/products?category=${currentProduct.category.toLowerCase()}`}
+                  to={`/products?category=${encodeURIComponent(
+                    categoryCrumbs.main.toLowerCase(),
+                  )}`}
                   className="hover:text-red-600 transition-colors capitalize"
                 >
-                  {currentProduct.category}
+                  {categoryCrumbs.main}
+                </Link>
+              </li>
+            </>
+          )}
+          {categoryCrumbs.sub && (
+            <>
+              <li className="text-slate-300">
+                <ChevronRight className="w-3.5 h-3.5" />
+              </li>
+              <li>
+                <Link
+                  to={`/products?category=${encodeURIComponent(
+                    categoryCrumbs.sub.toLowerCase(),
+                  )}`}
+                  className="hover:text-red-600 transition-colors capitalize"
+                >
+                  {categoryCrumbs.sub}
+                </Link>
+              </li>
+            </>
+          )}
+          {categoryCrumbs.cat && (
+            <>
+              <li className="text-slate-300">
+                <ChevronRight className="w-3.5 h-3.5" />
+              </li>
+              <li>
+                <Link
+                  to={`/products?category=${encodeURIComponent(
+                    categoryCrumbs.cat.toLowerCase(),
+                  )}`}
+                  className="hover:text-red-600 transition-colors capitalize"
+                >
+                  {categoryCrumbs.cat}
                 </Link>
               </li>
             </>
@@ -507,14 +587,18 @@ export const ProductDetail = () => {
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
-                      <span className="text-slate-500 font-medium">Category</span>
+                      <span className="text-slate-500 font-medium">
+                        Category
+                      </span>
                       <span className="font-bold text-slate-800 capitalize">
                         {currentProduct?.category || "Standard"}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
-                      <span className="text-slate-500 font-medium">Stock Status</span>
+                      <span className="text-slate-500 font-medium">
+                        Stock Status
+                      </span>
                       <span className="font-bold text-slate-800">
                         {currentProduct?.stock > 0
                           ? `${currentProduct.stock} available units`
@@ -523,14 +607,18 @@ export const ProductDetail = () => {
                     </div>
 
                     <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
-                      <span className="text-slate-500 font-medium">Total Sold</span>
+                      <span className="text-slate-500 font-medium">
+                        Total Sold
+                      </span>
                       <span className="font-bold text-slate-800">
                         {currentProduct?.total_sell || 0} items
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
-                      <span className="text-slate-500 font-medium">Estimated Delivery</span>
+                      <span className="text-slate-500 font-medium">
+                        Estimated Delivery
+                      </span>
                       <span className="font-bold text-emerald-600">
                         2 - 4 Business Days
                       </span>
@@ -583,7 +671,8 @@ export const ProductDetail = () => {
                       ))}
                     </div>
                     <p className="text-xs text-slate-500 font-medium">
-                      Based on {totalReviewsCount} {totalReviewsCount === 1 ? "rating" : "ratings"}
+                      Based on {totalReviewsCount}{" "}
+                      {totalReviewsCount === 1 ? "rating" : "ratings"}
                     </p>
                   </div>
 
@@ -597,9 +686,16 @@ export const ProductDetail = () => {
                           : 0;
 
                       return (
-                        <div key={stars} className="flex items-center gap-3 text-xs">
+                        <div
+                          key={stars}
+                          className="flex items-center gap-3 text-xs"
+                        >
                           <span className="w-10 font-bold text-slate-600 flex items-center gap-1">
-                            {stars} <Star size={12} className="fill-amber-400 text-amber-400" />
+                            {stars}{" "}
+                            <Star
+                              size={12}
+                              className="fill-amber-400 text-amber-400"
+                            />
                           </span>
                           <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
                             <div
@@ -624,11 +720,14 @@ export const ProductDetail = () => {
                         review?.user?.avatar?.url || review?.user?.avatar;
                       const userName = review?.user?.name || "Verified Buyer";
                       const formattedDate = review?.createdAt
-                        ? new Date(review.createdAt).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })
+                        ? new Date(review.createdAt).toLocaleDateString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            },
+                          )
                         : "Recently";
 
                       return (
@@ -692,7 +791,8 @@ export const ProductDetail = () => {
                         No customer reviews yet
                       </h4>
                       <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-                        Be the first to share your thoughts and help others make informed choices!
+                        Be the first to share your thoughts and help others make
+                        informed choices!
                       </p>
                     </div>
                   )}

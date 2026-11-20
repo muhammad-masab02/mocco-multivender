@@ -74,6 +74,9 @@ const createEvent = catchAsyncErrors(async (req, res, next) => {
             name,
             description,
             category,
+            mainCategory,
+            subCategory,
+            categoryPath,
             startDate,
             endDate,
             status,
@@ -133,10 +136,19 @@ const createEvent = catchAsyncErrors(async (req, res, next) => {
             }
         }
 
+        let computedPath = categoryPath;
+        if (!computedPath && category) {
+            const parts = [mainCategory, subCategory, category].filter(Boolean);
+            computedPath = parts.join(" > ");
+        }
+
         const event = await Event.create({
             name: name.trim(),
             description,
             category,
+            mainCategory: mainCategory || "",
+            subCategory: subCategory || "",
+            categoryPath: computedPath || "",
             startDate: start,
             endDate: end,
             status: initialStatus,
@@ -306,6 +318,9 @@ const updateEvent = catchAsyncErrors(async (req, res, next) => {
             name,
             description,
             category,
+            mainCategory,
+            subCategory,
+            categoryPath,
             startDate,
             endDate,
             status,
@@ -318,6 +333,18 @@ const updateEvent = catchAsyncErrors(async (req, res, next) => {
         if (name) event.name = name.trim();
         if (description) event.description = description;
         if (category) event.category = category;
+        if (mainCategory !== undefined) event.mainCategory = mainCategory;
+        if (subCategory !== undefined) event.subCategory = subCategory;
+        if (categoryPath !== undefined) {
+            event.categoryPath = categoryPath;
+        } else if (category || mainCategory || subCategory) {
+            const parts = [
+                mainCategory !== undefined ? mainCategory : event.mainCategory,
+                subCategory !== undefined ? subCategory : event.subCategory,
+                category !== undefined ? category : event.category,
+            ].filter(Boolean);
+            event.categoryPath = parts.join(" > ");
+        }
         if (startDate) event.startDate = new Date(startDate);
         if (endDate) event.endDate = new Date(endDate);
         if (tags) event.tags = typeof tags === "string" ? tags.split(",").map(t => t.trim()) : tags;

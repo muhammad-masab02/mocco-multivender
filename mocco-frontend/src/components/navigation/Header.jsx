@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
@@ -24,6 +24,7 @@ import {
 import { navItems, categoriesData } from "../../static/data.jsx";
 import { loadUser, logoutUser } from "../../services/store/actions/user.js";
 import { getAllEvents } from "../../services/store/actions/event.js";
+import { getCategoryTree } from "../../services/store/actions/category.js";
 import { clearWishlistState } from "../../services/store/slices/wishlistSlice.js";
 import { clearCartState } from "../../services/store/slices/cartSlice.js";
 import { initGuestWishlist } from "../../services/store/actions/wishlist.js";
@@ -45,6 +46,7 @@ const Header = () => {
   );
   const { ids: wishlistIds } = useSelector((state) => state.wishlist);
   const { cartItems } = useSelector((state) => state.cart);
+  const { categoriesTree } = useSelector((state) => state.category || {});
 
   const isAdmin = isUserAuthenticated && String(user?.role || "").toLowerCase() === "admin";
   const isSeller = isSellerAuthenticated && Boolean(seller?._id);
@@ -54,7 +56,43 @@ const Header = () => {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [hoveredMainIndex, setHoveredMainIndex] = useState(0);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Normalize displayCategories to guarantee both .children and .subcategories
+  const displayCategories = useMemo(() => {
+    if (categoriesTree?.length) {
+      return categoriesTree.map((main) => ({
+        ...main,
+        children: (main.children || main.subcategories || []).map((sub) => ({
+          ...sub,
+          children: sub.children || sub.categories || [],
+          categories: sub.children || sub.categories || [],
+        })),
+        subcategories: (main.children || main.subcategories || []).map((sub) => ({
+          ...sub,
+          children: sub.children || sub.categories || [],
+          categories: sub.children || sub.categories || [],
+        })),
+      }));
+    }
+    return categoriesData.map((c) => ({
+      name: c.title,
+      description: c.subTitle || "",
+      children:
+        c.subcategories?.map((s) => ({
+          name: s,
+          children: [],
+          categories: [],
+        })) || [],
+      subcategories:
+        c.subcategories?.map((s) => ({
+          name: s,
+          children: [],
+          categories: [],
+        })) || [],
+    }));
+  }, [categoriesTree]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -62,10 +100,13 @@ const Header = () => {
   const categoryDropdownRef = useRef(null);
   const profileDropdownRef = useRef(null);
 
-  // Fetch events for search
+  // Fetch events and category tree for search & navigation
   useEffect(() => {
     dispatch(getAllEvents());
-  }, [dispatch]);
+    if (!categoriesTree || categoriesTree.length === 0) {
+      dispatch(getCategoryTree());
+    }
+  }, [dispatch, categoriesTree]);
 
   // Hysteresis-based scroll listener — hides search bar above 110px, shows it below 25px.
   // This wide hysteresis gap completely eliminates boundary jitter/blinking during half scroll.
@@ -220,38 +261,176 @@ const Header = () => {
               />
             </button>
 
-            {/* Dropdown Menu */}
+            {/* Dropdown Menu - Mega Flyout */}
             {isCategoryOpen && (
-              <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-50 text-neutral-800">
-                <div className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-neutral-400 border-b border-gray-100 flex items-center justify-between">
-                  <span>Browse Categories</span>
-                  <span className="text-[10px] text-red-500 font-semibold bg-red-50 px-2 py-0.5 rounded-full">
-                    {categoriesData?.length}
-                  </span>
+              <div className="absolute top-full left-0 mt-2 w-72 md:w-[680px] bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-50 text-neutral-800 flex flex-col md:flex-row overflow-hidden">
+                {/* Left Column: Main Categories */}
+                <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-gray-100 shrink-0">
+                  <div className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-neutral-400 border-b border-gray-100 flex items-center justify-between">
+                    <span>Main Categories</span>
+                    <span className="text-[10px] text-red-500 font-semibold bg-red-50 px-2 py-0.5 rounded-full">
+                      {displayCategories?.length}
+                    </span>
+                  </div>
+                  <div className="max-h-88 overflow-y-auto py-1">
+                    {displayCategories?.map((category, idx) => (
+                      <button
+                        key={category._id || category.name}
+                        onMouseEnter={() => setHoveredMainIndex(idx)}
+                        onClick={() => {
+                          navigate(
+                            `/products?category=${encodeURIComponent(
+                              category.name.toLowerCase(),
+                            )}`,
+                          );
+                          setIsCategoryOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors group cursor-pointer ${
+                          hoveredMainIndex === idx
+                            ? "bg-red-50 text-red-600 font-semibold"
+                            : "text-neutral-700 hover:bg-neutral-50 hover:text-red-600"
+                        }`}
+                      >
+                        <span className="font-medium truncate capitalize">
+                          {category.name}
+                        </span>
+                        <ChevronRight
+                          size={14}
+                          className={`transition-all ${
+                            hoveredMainIndex === idx
+                              ? "text-red-500 translate-x-1"
+                              : "text-neutral-400 group-hover:text-red-500"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="max-h-80 overflow-y-auto py-1">
-                  {categoriesData?.map((category) => (
-                    <button
-                      key={category.id || category.title}
-                      onClick={() => {
-                        navigate(
-                          `/products?category=${encodeURIComponent(
-                            category.title.toLowerCase(),
-                          )}`,
-                        );
-                        setIsCategoryOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-red-50 hover:text-red-600 flex items-center justify-between transition-colors group cursor-pointer"
-                    >
-                      <span className="font-medium truncate capitalize">
-                        {category.title}
-                      </span>
-                      <ChevronRight
-                        size={14}
-                        className="text-neutral-400 group-hover:text-red-500 group-hover:translate-x-0.5 transition-all"
-                      />
-                    </button>
-                  ))}
+
+                {/* Right Column: Subcategories & Product Categories */}
+                <div className="hidden md:block flex-1 max-h-88 overflow-y-auto p-4 bg-neutral-50/50">
+                  {displayCategories[hoveredMainIndex] ? (
+                    <div>
+                      <div className="flex items-center justify-between pb-2 mb-3 border-b border-neutral-200/70">
+                        <div>
+                          <h4 className="text-sm font-bold text-neutral-900">
+                            {displayCategories[hoveredMainIndex].name}
+                          </h4>
+                          <p className="text-[11px] text-neutral-400 line-clamp-1">
+                            {displayCategories[hoveredMainIndex].description || "Explore subcategories & items"}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigate(
+                              `/products?category=${encodeURIComponent(
+                                displayCategories[hoveredMainIndex].name.toLowerCase(),
+                              )}`,
+                            );
+                            setIsCategoryOpen(false);
+                          }}
+                          className="text-xs font-semibold text-red-600 hover:text-red-700 transition cursor-pointer"
+                        >
+                          View All &rarr;
+                        </button>
+                      </div>
+
+                      {(!displayCategories[hoveredMainIndex]?.children ||
+                        displayCategories[hoveredMainIndex].children.length === 0) ? (
+                        <div className="py-12 text-center bg-white rounded-xl border border-neutral-100">
+                          <p className="text-xs font-medium text-neutral-500">
+                            Explore all products in {displayCategories[hoveredMainIndex].name}.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigate(
+                                `/products?category=${encodeURIComponent(
+                                  displayCategories[hoveredMainIndex].name.toLowerCase(),
+                                )}`,
+                              );
+                              setIsCategoryOpen(false);
+                            }}
+                            className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-red-600 hover:underline cursor-pointer"
+                          >
+                            Browse Category &rarr;
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3">
+                          {displayCategories[hoveredMainIndex].children.map(
+                            (sub) => (
+                              <div
+                                key={sub._id || sub.name}
+                                className="rounded-xl bg-white p-2.5 border border-neutral-200/60 shadow-2xs hover:border-red-200 transition"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigate(
+                                      `/products?category=${encodeURIComponent(
+                                        sub.name.toLowerCase(),
+                                      )}`,
+                                    );
+                                    setIsCategoryOpen(false);
+                                  }}
+                                  className="w-full text-left font-semibold text-xs text-neutral-800 hover:text-red-600 transition flex items-center justify-between mb-1.5 cursor-pointer"
+                                >
+                                  <span className="truncate">{sub.name}</span>
+                                  <ChevronRight size={12} className="text-neutral-400 shrink-0" />
+                                </button>
+                                {sub.children && sub.children.length > 0 && (
+                                  <ul className="space-y-1 pl-1">
+                                    {sub.children.slice(0, 4).map((pCat) => (
+                                      <li key={pCat._id || pCat.name}>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            navigate(
+                                              `/products?category=${encodeURIComponent(
+                                                pCat.name.toLowerCase(),
+                                              )}`,
+                                            );
+                                            setIsCategoryOpen(false);
+                                          }}
+                                          className="text-[11px] text-neutral-500 hover:text-red-600 transition text-left truncate w-full block cursor-pointer"
+                                        >
+                                          {pCat.name}
+                                        </button>
+                                      </li>
+                                    ))}
+                                    {sub.children.length > 4 && (
+                                      <li>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            navigate(
+                                              `/products?category=${encodeURIComponent(
+                                                sub.name.toLowerCase(),
+                                              )}`,
+                                            );
+                                            setIsCategoryOpen(false);
+                                          }}
+                                          className="text-[10px] text-red-500 hover:underline font-medium cursor-pointer"
+                                        >
+                                          +{sub.children.length - 4} more
+                                        </button>
+                                      </li>
+                                    )}
+                                  </ul>
+                                )}
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-xs text-neutral-400">
+                      Hover over a main category to view its subcategories
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -561,20 +740,20 @@ const Header = () => {
                 Top Categories
               </p>
               <div className="space-y-1">
-                {categoriesData?.slice(0, 6).map((cat) => (
+                {displayCategories?.slice(0, 6).map((cat) => (
                   <button
-                    key={cat.title}
+                    key={cat._id || cat.name}
                     onClick={() => {
                       navigate(
                         `/products?category=${encodeURIComponent(
-                          cat.title.toLowerCase(),
+                          cat.name.toLowerCase(),
                         )}`,
                       );
                       handleMenuClose();
                     }}
                     className="w-full text-left px-3 py-1.5 text-xs text-neutral-600 hover:text-red-600 hover:bg-neutral-50 rounded-lg transition capitalize flex items-center justify-between"
                   >
-                    <span>{cat.title}</span>
+                    <span>{cat.name}</span>
                     <ChevronRight size={12} className="text-neutral-400" />
                   </button>
                 ))}

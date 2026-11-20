@@ -42,7 +42,11 @@ const Events = () => {
         const q = searchQuery.toLowerCase();
         const matchTitle = (event.name || "").toLowerCase().includes(q);
         const matchDesc = (event.description || "").toLowerCase().includes(q);
-        const matchCat = (event.category || "").toLowerCase().includes(q);
+        const matchCat =
+          (event.category || "").toLowerCase().includes(q) ||
+          (event.mainCategory || "").toLowerCase().includes(q) ||
+          (event.subCategory || "").toLowerCase().includes(q) ||
+          (event.categoryPath || "").toLowerCase().includes(q);
         const matchShop = (event.shop?.name || "").toLowerCase().includes(q);
         if (!matchTitle && !matchDesc && !matchCat && !matchShop) return false;
       }

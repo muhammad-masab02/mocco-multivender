@@ -1,25 +1,29 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { X, Upload, Trash2 } from "lucide-react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { updateProduct } from "../../../services/store/actions/product";
 import { updateEvent } from "../../../services/store/actions/event";
-
-const categories = [
-  "Computers and Laptops",
-  "Mobile and Tablets",
-  "Music and Gaming",
-  "Others",
-];
+import { getCategoryTree } from "../../../services/store/actions/category";
 
 const EditProductOrEventModal = ({ item, mode = "product", onClose, onSuccess }) => {
   const isEvent = mode === "event";
   const dispatch = useDispatch();
   const fileInputRef = useRef(null);
 
+  const { categoriesTree } = useSelector((state) => state.category || {});
+
+  useEffect(() => {
+    if (!categoriesTree || categoriesTree.length === 0) {
+      dispatch(getCategoryTree());
+    }
+  }, [dispatch, categoriesTree]);
+
   const [formData, setFormData] = useState({
     name: item?.name || "",
     description: item?.description || "",
-    category: item?.category || categories[0],
+    mainCategory: item?.mainCategory || "",
+    subCategory: item?.subCategory || "",
+    category: item?.category || "",
     tags: Array.isArray(item?.tags) ? item.tags.join(", ") : item?.tags || "",
     price: item?.price ?? "",
     discount_price: item?.discount_price ?? "",
@@ -29,6 +33,89 @@ const EditProductOrEventModal = ({ item, mode = "product", onClose, onSuccess })
     status: item?.status || "Running",
     isFeatured: !!item?.isFeatured,
   });
+
+  // Attempt to resolve mainCategory and subCategory for legacy items from categoriesTree
+  useEffect(() => {
+    if (categoriesTree?.length && !formData.mainCategory && item?.category) {
+      const targetCat = item.category.trim().toLowerCase();
+
+      // Check legacy aliases first
+      const legacyAliases = {
+        "computers and laptops": { main: "Electronics & Technology", sub: "Computers & Laptops", cat: "Laptops" },
+        "computers and laptop": { main: "Electronics & Technology", sub: "Computers & Laptops", cat: "Laptops" },
+        "mobile and tablets": { main: "Electronics & Technology", sub: "Mobile Phones & Accessories", cat: "Smartphones" },
+        "music and gaming": { main: "Electronics & Technology", sub: "Headphones & Audio", cat: "Headphones" },
+        "others": { main: "Electronics & Technology", sub: "Smart Gadgets", cat: "Smart Gadgets" },
+        "cloths": { main: "Fashion", sub: "Women's Fashion", cat: "Clothing" },
+        "cosmetics and body care": { main: "Beauty & Personal Care", sub: "Skincare", cat: "Moisturizers & Creams" },
+      };
+
+      if (legacyAliases[targetCat]) {
+        const alias = legacyAliases[targetCat];
+        setFormData((prev) => ({
+          ...prev,
+          mainCategory: alias.main,
+          subCategory: alias.sub,
+          category: alias.cat,
+        }));
+        return;
+      }
+
+      for (const main of categoriesTree) {
+        if (main.name.toLowerCase() === targetCat) {
+          setFormData((prev) => ({ ...prev, mainCategory: main.name }));
+          return;
+        }
+        const subList = main.children || main.subcategories || [];
+        for (const sub of subList) {
+          if (sub.name.toLowerCase() === targetCat) {
+            setFormData((prev) => ({
+              ...prev,
+              mainCategory: main.name,
+              subCategory: sub.name,
+            }));
+            return;
+          }
+          const catList = sub.children || sub.categories || [];
+          for (const prodCat of catList) {
+            if (prodCat.name.toLowerCase() === targetCat) {
+              setFormData((prev) => ({
+                ...prev,
+                mainCategory: main.name,
+                subCategory: sub.name,
+                category: prodCat.name,
+              }));
+              return;
+            }
+          }
+        }
+      }
+    }
+  }, [categoriesTree, item, formData.mainCategory]);
+
+  // Derived subcategories
+  const availableSubCategories = useMemo(() => {
+    if (!formData.mainCategory || !categoriesTree) return [];
+    const main = categoriesTree.find(
+      (c) => c.name.toLowerCase() === formData.mainCategory.toLowerCase(),
+    );
+    return main?.children || main?.subcategories || [];
+  }, [formData.mainCategory, categoriesTree]);
+
+  // Derived product categories
+  const availableProductCategories = useMemo(() => {
+    if (!formData.subCategory || !availableSubCategories) return [];
+    const sub = availableSubCategories.find(
+      (c) => c.name.toLowerCase() === formData.subCategory.toLowerCase(),
+    );
+    return sub?.children || sub?.categories || sub?.subcategories || [];
+  }, [formData.subCategory, availableSubCategories]);
+
+  const computedCategoryPath = useMemo(() => {
+    return [formData.mainCategory, formData.subCategory, formData.category]
+      .filter(Boolean)
+      .join(" > ");
+  }, [formData.mainCategory, formData.subCategory, formData.category]);
 
   const [newImages, setNewImages] = useState([]);
   const [existingImages] = useState(item?.images || []);
@@ -94,7 +181,10 @@ const EditProductOrEventModal = ({ item, mode = "product", onClose, onSuccess })
       const data = new FormData();
       data.append("name", formData.name);
       data.append("description", formData.description);
-      data.append("category", formData.category);
+      data.append("mainCategory", formData.mainCategory || "");
+      data.append("subCategory", formData.subCategory || "");
+      data.append("category", formData.category || formData.subCategory || formData.mainCategory || "");
+      data.append("categoryPath", computedCategoryPath);
       data.append("tags", formData.tags);
       data.append("price", formData.price);
       data.append("discount_price", formData.discount_price);
@@ -176,34 +266,111 @@ const EditProductOrEventModal = ({ item, mode = "product", onClose, onSuccess })
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700">Category *</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-              >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+          {/* 3-Level Category Selectors */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                Category Hierarchy *
+              </span>
+              {computedCategoryPath && (
+                <span className="text-[11px] font-medium text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200 truncate max-w-xs">
+                  {computedCategoryPath}
+                </span>
+              )}
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700">Tags (comma separated)</label>
-              <input
-                type="text"
-                name="tags"
-                value={formData.tags}
-                onChange={handleChange}
-                placeholder="tech, gadget, mobile"
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-              />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  1. Main Category *
+                </label>
+                <select
+                  name="mainCategory"
+                  value={formData.mainCategory}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      mainCategory: e.target.value,
+                      subCategory: "",
+                      category: "",
+                    }))
+                  }
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                  required
+                >
+                  <option value="">Select Main Category</option>
+                  {categoriesTree?.map((cat) => (
+                    <option key={cat._id || cat.name} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  2. Subcategory *
+                </label>
+                <select
+                  name="subCategory"
+                  value={formData.subCategory}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      subCategory: e.target.value,
+                      category: "",
+                    }))
+                  }
+                  disabled={!formData.mainCategory}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:cursor-not-allowed"
+                  required
+                >
+                  <option value="">
+                    {formData.mainCategory ? "Select Subcategory" : "Main Category First"}
+                  </option>
+                  {availableSubCategories.map((sub) => (
+                    <option key={sub._id || sub.name} value={sub.name}>
+                      {sub.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  3. Product Category *
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  disabled={!formData.subCategory}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:cursor-not-allowed"
+                  required
+                >
+                  <option value="">
+                    {formData.subCategory ? "Select Product Category" : "Subcategory First"}
+                  </option>
+                  {availableProductCategories.map((prodCat) => (
+                    <option key={prodCat._id || prodCat.name} value={prodCat.name}>
+                      {prodCat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700">Tags (comma separated)</label>
+            <input
+              type="text"
+              name="tags"
+              value={formData.tags}
+              onChange={handleChange}
+              placeholder="tech, gadget, mobile"
+              className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

@@ -7,6 +7,7 @@ import {
   ShoppingBag,
   Wallet,
   Settings,
+  FolderTree,
 } from "lucide-react";
 
 export const adminDashboardItems = [
@@ -45,6 +46,12 @@ export const adminDashboardItems = [
     label: "All Events",
     icon: Tag,
     color: "pink",
+  },
+  {
+    id: "categories",
+    label: "Categories",
+    icon: FolderTree,
+    color: "teal",
   },
   {
     id: "withdraw",

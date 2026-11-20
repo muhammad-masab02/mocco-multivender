@@ -189,18 +189,18 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/products?category=Computers%20and%20Laptops"
+                  to="/products?category=Electronics%20%26%20Technology"
                   className="hover:text-white transition-colors"
                 >
-                  Computers & Laptop
+                  Electronics & Technology
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/products?category=Cloths"
+                  to="/products?category=Fashion"
                   className="hover:text-white transition-colors"
                 >
-                  Clothes & Fashion
+                  Fashion & Apparel
                 </Link>
               </li>
             </ul>

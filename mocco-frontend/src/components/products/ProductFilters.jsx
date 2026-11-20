@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Star, RotateCcw, Check, Sparkles, Tag, DollarSign, Layers } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Star, RotateCcw, Check, Sparkles, Tag, DollarSign, Layers, ChevronDown, ChevronRight } from "lucide-react";
 
 /**
  * ProductFilters component
@@ -26,6 +26,26 @@ const ProductFilters = ({
   // Local state for price inputs
   const [localMin, setLocalMin] = useState(minPrice);
   const [localMax, setLocalMax] = useState(maxPrice);
+  const [expandedMains, setExpandedMains] = useState({});
+
+  // Auto-expand main category if active filter belongs to its subcategories
+  useEffect(() => {
+    if (selectedCategory && selectedCategory !== "all" && categories.length > 0) {
+      const selLower = selectedCategory.toLowerCase();
+      categories.forEach((main) => {
+        const hasMatch =
+          main.title?.toLowerCase() === selLower ||
+          main.subcategories?.some((s) => s.title?.toLowerCase() === selLower);
+        if (hasMatch) {
+          setExpandedMains((prev) => ({ ...prev, [main.title]: true }));
+        }
+      });
+    }
+  }, [selectedCategory, categories]);
+
+  const toggleMainExpand = (mainTitle) => {
+    setExpandedMains((prev) => ({ ...prev, [mainTitle]: !prev[mainTitle] }));
+  };
 
   const handleApplyPrice = (e) => {
     e?.preventDefault();
@@ -76,9 +96,9 @@ const ProductFilters = ({
       {/* Category Filter */}
       <div className="space-y-3">
         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-          Categories
+          Categories & Subcategories
         </h4>
-        <div className="space-y-1 max-h-56 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
+        <div className="space-y-1 max-h-72 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
           <button
             type="button"
             onClick={() => onSelectCategory("all")}
@@ -92,25 +112,88 @@ const ProductFilters = ({
             {selectedCategory === "all" && <Check size={14} className="text-red-600" />}
           </button>
 
-          {categories.map((cat) => {
-            const isSelected =
-              selectedCategory.toLowerCase() === cat.title.toLowerCase();
+          {categories.map((main) => {
+            const isMainSelected =
+              selectedCategory.toLowerCase() === main.title.toLowerCase();
+            const hasSubs = Array.isArray(main.subcategories) && main.subcategories.length > 0;
+            const isExpanded = !!expandedMains[main.title];
+
             return (
-              <button
-                key={cat.id || cat.title}
-                type="button"
-                onClick={() => onSelectCategory(cat.title)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer capitalize ${
-                  isSelected
-                    ? "bg-red-50 text-red-600 font-semibold shadow-xs"
-                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                }`}
-              >
-                <span className="truncate">{cat.title}</span>
-                <span className="text-[11px] font-semibold text-slate-400 ml-2">
-                  {cat.count}
-                </span>
-              </button>
+              <div key={main.id || main.title} className="space-y-0.5">
+                {/* Main Category Row */}
+                <div
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs sm:text-sm transition group ${
+                    isMainSelected
+                      ? "bg-red-50 text-red-600 font-semibold shadow-xs"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    {hasSubs ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleMainExpand(main.title);
+                        }}
+                        className="p-1 hover:bg-slate-200/60 rounded text-slate-400 hover:text-slate-600 transition shrink-0 cursor-pointer"
+                        title={isExpanded ? "Collapse" : "Expand subcategories"}
+                      >
+                        <ChevronRight
+                          size={13}
+                          className={`transition-transform duration-200 ${
+                            isExpanded ? "rotate-90 text-red-500" : ""
+                          }`}
+                        />
+                      </button>
+                    ) : (
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-300 ml-1.5 shrink-0" />
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => onSelectCategory(main.title)}
+                      className="truncate text-left flex-1 cursor-pointer"
+                    >
+                      <span className={isMainSelected ? "font-bold text-red-600" : "font-medium"}>
+                        {main.title}
+                      </span>
+                    </button>
+                  </div>
+
+                  <span className="text-[11px] font-semibold text-slate-400 ml-2 shrink-0">
+                    {main.count}
+                  </span>
+                </div>
+
+                {/* Subcategories (when expanded) */}
+                {hasSubs && isExpanded && (
+                  <div className="pl-6 pr-1 py-1 space-y-0.5 border-l-2 border-slate-100 ml-4 animate-in fade-in duration-150">
+                    {main.subcategories.map((sub) => {
+                      const isSubSelected =
+                        selectedCategory.toLowerCase() === sub.title.toLowerCase();
+
+                      return (
+                        <button
+                          key={sub.id || sub.title}
+                          type="button"
+                          onClick={() => onSelectCategory(sub.title)}
+                          className={`w-full flex items-center justify-between px-2 py-1 rounded-lg text-xs transition cursor-pointer text-left ${
+                            isSubSelected
+                              ? "bg-red-100/70 text-red-700 font-bold"
+                              : "text-slate-500 hover:text-red-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          <span className="truncate">{sub.title}</span>
+                          <span className="text-[10px] text-slate-400 ml-1.5 shrink-0">
+                            {sub.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>

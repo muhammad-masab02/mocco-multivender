@@ -13,6 +13,22 @@ const productSchema = new Schema(
         category: {
             type: String,
             required: [true, "Please enter product category!"],
+            trim: true,
+        },
+        mainCategory: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+        subCategory: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+        categoryPath: {
+            type: String,
+            trim: true,
+            default: "",
         },
         tags: {
             type: [String],
@@ -78,6 +94,10 @@ const productSchema = new Schema(
         //     required: true,
         // }
     }, { timestamps: true });
+
+productSchema.index({ category: 1 });
+productSchema.index({ mainCategory: 1 });
+productSchema.index({ subCategory: 1 });
 
 const Product = mongoose.model("Product", productSchema);
 

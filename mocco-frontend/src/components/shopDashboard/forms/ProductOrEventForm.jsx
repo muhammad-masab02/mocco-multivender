@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { getCategoryTree } from "../../../services/store/actions/category";
 
 const ProductOrEventForm = ({ mode = "product", onSubmit }) => {
+  const dispatch = useDispatch();
   const isEvent = mode === "event";
   const fileInputRef = useRef(null);
   const [images, setImages] = useState([]);
@@ -12,6 +14,44 @@ const ProductOrEventForm = ({ mode = "product", onSubmit }) => {
   const [eventDateError, setEventDateError] = useState("");
   // isFeatured defaults to false — seller must explicitly promote the product
   const [isFeatured, setIsFeatured] = useState(false);
+
+  // 3-Level Category State
+  const [selectedMainCategory, setSelectedMainCategory] = useState("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("");
+  const [selectedProductCategory, setSelectedProductCategory] = useState("");
+
+  const { categoriesTree } = useSelector((state) => state.category || {});
+
+  useEffect(() => {
+    if (!categoriesTree || categoriesTree.length === 0) {
+      dispatch(getCategoryTree());
+    }
+  }, [dispatch, categoriesTree]);
+
+  // Find subcategories for selected main category
+  const availableSubCategories = useMemo(() => {
+    if (!selectedMainCategory || !categoriesTree) return [];
+    const main = categoriesTree.find(
+      (c) => c.name.toLowerCase() === selectedMainCategory.toLowerCase(),
+    );
+    return main?.children || main?.subcategories || [];
+  }, [selectedMainCategory, categoriesTree]);
+
+  // Find product categories for selected subcategory
+  const availableProductCategories = useMemo(() => {
+    if (!selectedSubCategory || !availableSubCategories) return [];
+    const sub = availableSubCategories.find(
+      (c) => c.name.toLowerCase() === selectedSubCategory.toLowerCase(),
+    );
+    return sub?.children || sub?.categories || sub?.subcategories || [];
+  }, [selectedSubCategory, availableSubCategories]);
+
+  // Computed full category path
+  const computedCategoryPath = useMemo(() => {
+    return [selectedMainCategory, selectedSubCategory, selectedProductCategory]
+      .filter(Boolean)
+      .join(" > ");
+  }, [selectedMainCategory, selectedSubCategory, selectedProductCategory]);
 
   const getMinEndDate = (selectedStartDate) => {
     if (!selectedStartDate) return "";
@@ -154,6 +194,14 @@ const ProductOrEventForm = ({ mode = "product", onSubmit }) => {
       }
     }
 
+    if (!selectedMainCategory) {
+      setStatusMessage({
+        type: "error",
+        text: "Please select a main category.",
+      });
+      return;
+    }
+
     try {
       const submitted = await onSubmit?.(
         event,
@@ -170,6 +218,9 @@ const ProductOrEventForm = ({ mode = "product", onSubmit }) => {
         setImageError("");
         handleClearImages();
         event.target.reset();
+        setSelectedMainCategory("");
+        setSelectedSubCategory("");
+        setSelectedProductCategory("");
         setStartDate("");
         setEndDate("");
         setEventDateError("");
@@ -233,33 +284,116 @@ const ProductOrEventForm = ({ mode = "product", onSubmit }) => {
           />
         </label>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-slate-700">
-              Category <span className="text-rose-500">*</span>
+        {/* 3-Level Category Cascading Selectors */}
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-slate-800">
+              Category Hierarchy <span className="text-rose-500">*</span>
             </span>
-            <select
-              name="category"
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-              defaultValue=""
-              required
-            >
-              <option value="" disabled>
-                Choose a category
-              </option>
-              <option>Computers and Laptops</option>
-              <option>Mobile and Tablets</option>
-              <option>Music and Gaming</option>
-              <option>Others</option>
-            </select>
-          </label>
+            {computedCategoryPath && (
+              <span className="text-xs font-medium text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                Path: <strong className="text-slate-800">{computedCategoryPath}</strong>
+              </span>
+            )}
+          </div>
 
-          <label className="space-y-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {/* Level 1: Main Category */}
+            <label className="space-y-1.5 block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+                1. Main Category <span className="text-rose-500">*</span>
+              </span>
+              <select
+                value={selectedMainCategory}
+                onChange={(e) => {
+                  setSelectedMainCategory(e.target.value);
+                  setSelectedSubCategory("");
+                  setSelectedProductCategory("");
+                }}
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                required
+              >
+                <option value="">Select Main Category</option>
+                {categoriesTree?.map((cat) => (
+                  <option key={cat._id || cat.name} value={cat.name}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {/* Level 2: Subcategory */}
+            <label className="space-y-1.5 block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+                2. Subcategory <span className="text-rose-500">*</span>
+              </span>
+              <select
+                value={selectedSubCategory}
+                onChange={(e) => {
+                  setSelectedSubCategory(e.target.value);
+                  setSelectedProductCategory("");
+                }}
+                disabled={!selectedMainCategory}
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:cursor-not-allowed"
+                required
+              >
+                <option value="">
+                  {selectedMainCategory
+                    ? "Select Subcategory"
+                    : "Select Main Category First"}
+                </option>
+                {availableSubCategories.map((sub) => (
+                  <option key={sub._id || sub.name} value={sub.name}>
+                    {sub.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {/* Level 3: Product Category */}
+            <label className="space-y-1.5 block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+                3. Product Category <span className="text-rose-500">*</span>
+              </span>
+              <select
+                value={selectedProductCategory}
+                onChange={(e) => setSelectedProductCategory(e.target.value)}
+                disabled={!selectedSubCategory}
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:cursor-not-allowed"
+                required
+              >
+                <option value="">
+                  {selectedSubCategory
+                    ? "Select Product Category"
+                    : "Select Subcategory First"}
+                </option>
+                {availableProductCategories.map((prodCat) => (
+                  <option key={prodCat._id || prodCat.name} value={prodCat.name}>
+                    {prodCat.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {/* Hidden inputs submitted in FormData */}
+          <input type="hidden" name="mainCategory" value={selectedMainCategory} />
+          <input type="hidden" name="subCategory" value={selectedSubCategory} />
+          <input
+            type="hidden"
+            name="category"
+            value={selectedProductCategory || selectedSubCategory || selectedMainCategory}
+          />
+          <input type="hidden" name="categoryPath" value={computedCategoryPath} />
+        </div>
+
+        <div>
+          <label className="space-y-2 block">
             <span className="text-sm font-semibold text-slate-700">Tags</span>
             <input
               type="text"
               name="tags"
-              placeholder="Tags (comma separated)"
+              placeholder="Tags (comma separated, e.g. electronics, wireless, sale)"
               className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
             />
           </label>

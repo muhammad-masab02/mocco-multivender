@@ -1,4 +1,5 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import {
   Truck,
   Flame,
@@ -17,6 +18,22 @@ const BRAND_ICON_MAP = {
 };
 
 const CategoriesGrid = ({ handleCategoryClick }) => {
+  const { categoriesTree } = useSelector((state) => state.category || {});
+
+  // Use dynamic tree from Redux, fallback to categoriesData
+  const displayCategories = categoriesTree?.length
+    ? categoriesTree.map((cat, idx) => ({
+        id: cat._id || idx + 1,
+        title: cat.name,
+        subTitle: cat.description || "",
+        image_Url:
+          cat.image?.url ||
+          categoriesData[idx]?.image_Url ||
+          "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&auto=format&fit=crop&q=80",
+        subcategoriesCount: cat.children?.length || 0,
+      }))
+    : categoriesData;
+
   return (
     <section className="w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Branding Data Cards */}
@@ -72,8 +89,8 @@ const CategoriesGrid = ({ handleCategoryClick }) => {
       </div>
 
       {/* Categories Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-5">
-        {categoriesData?.map((category) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-5">
+        {displayCategories?.map((category) => (
           <article
             key={category.id}
             onClick={() => handleCategoryClick(category.title)}

@@ -7,22 +7,26 @@ const CategoryMenu = ({ categories = [], handleCategoryClick }) => {
       {/* categories heading */}
       <h2 className="text-lg font-semibold mb-1 px-1 text-black">Categories</h2>
       {/* Category Menu */}
-      {categories?.map((item) => (
-        <button
-          key={item.title}
-          title={item.title}
-          onClick={() => handleCategoryClick(item.title)}
-          className="group flex items-center justify-between w-full text-left my-0.5 py-1 px-1 cursor-pointer rounded hover:bg-red-100 transition-colors duration-200"
-        >
-          <span className="text-gray-700 truncate">{item.title}</span>
-          {item.subcategories && item.subcategories.length > 0 && (
-            <ChevronRight
-              fontSize="small"
-              className="text-gray-400 group-hover:text-red-500"
-            />
-          )}
-        </button>
-      ))}
+      {categories?.map((item) => {
+        const title = item.name || item.title;
+        const subList = item.children || item.subcategories;
+        return (
+          <button
+            key={item._id || title}
+            title={title}
+            onClick={() => handleCategoryClick(title)}
+            className="group flex items-center justify-between w-full text-left my-0.5 py-1 px-1 cursor-pointer rounded hover:bg-red-100 transition-colors duration-200"
+          >
+            <span className="text-gray-700 truncate">{title}</span>
+            {subList && subList.length > 0 && (
+              <ChevronRight
+                fontSize="small"
+                className="text-gray-400 group-hover:text-red-500"
+              />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 };
