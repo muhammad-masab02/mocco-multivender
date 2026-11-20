@@ -31,6 +31,9 @@ const ProductDetailInfo = ({
   total_sell = 0,
   category,
   shop,
+  startDate,
+  endDate,
+  status,
 
   quantity,
   setQuantity,
@@ -47,6 +50,11 @@ const ProductDetailInfo = ({
 
   const reviewsCount = Array.isArray(reviews) ? reviews.length : 0;
   const displayRating = Number(rating || 0).toFixed(1);
+
+  const isEvent = Boolean(endDate);
+  const isExpired =
+    isEvent &&
+    (status === "Ended" || new Date(endDate).getTime() < Date.now());
 
   const regularPrice = Number(price || 0);
   const salePrice = Number(discount_price || price || 0);
@@ -221,6 +229,31 @@ const ProductDetailInfo = ({
         </p>
       )}
 
+      {/* Event Ended Notice Banner */}
+      {isExpired && (
+        <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800">
+          <div className="h-9 w-9 rounded-xl bg-rose-100 flex items-center justify-center shrink-0 text-rose-600 font-extrabold text-base">
+            !
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-sm font-bold text-rose-900">
+              Promotional Event Concluded
+            </p>
+            <p className="text-xs text-rose-700">
+              This promotional sale ended on{" "}
+              {endDate
+                ? new Date(endDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "the scheduled date"}
+              . This item is no longer available for purchase.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Quantity & Actions Bar */}
       <div className="pt-2 space-y-4">
         <div className="flex items-center justify-between sm:justify-start gap-5">
@@ -232,7 +265,7 @@ const ProductDetailInfo = ({
           <div className="flex items-center rounded-2xl border border-slate-200 bg-white p-1 shadow-xs">
             <button
               type="button"
-              disabled={quantity <= 1 || isOutOfStock}
+              disabled={quantity <= 1 || isOutOfStock || isExpired}
               onClick={() => setQuantity(quantity > 1 ? quantity - 1 : 1)}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none transition-colors"
               aria-label="Decrease quantity"
@@ -246,7 +279,7 @@ const ProductDetailInfo = ({
 
             <button
               type="button"
-              disabled={quantity >= stock || isOutOfStock}
+              disabled={quantity >= stock || isOutOfStock || isExpired}
               onClick={() => setQuantity(quantity < stock ? quantity + 1 : stock)}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none transition-colors"
               aria-label="Increase quantity"
@@ -256,7 +289,11 @@ const ProductDetailInfo = ({
           </div>
 
           <span className="text-xs text-slate-400">
-            {stock > 0 ? `Max: ${stock} items` : "Unavailable"}
+            {isExpired
+              ? "Event concluded"
+              : stock > 0
+              ? `Max: ${stock} items`
+              : "Unavailable"}
           </span>
         </div>
 
@@ -266,7 +303,7 @@ const ProductDetailInfo = ({
           <button
             type="button"
             onClick={onAddToCart}
-            disabled={isCartLoading || isOutOfStock}
+            disabled={isCartLoading || isOutOfStock || isExpired}
             className="flex-1 py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all duration-200 hover:-translate-y-0.5 shadow-lg shadow-slate-900/15 cursor-pointer active:scale-[0.98]"
           >
             {isCartLoading ? (
@@ -274,6 +311,8 @@ const ProductDetailInfo = ({
                 <Loader2 className="w-5 h-5 animate-spin" />
                 <span>Adding to Cart...</span>
               </>
+            ) : isExpired ? (
+              <span>Event Concluded</span>
             ) : (
               <>
                 <ShoppingCart className="w-5 h-5" />
@@ -286,11 +325,17 @@ const ProductDetailInfo = ({
           <button
             type="button"
             onClick={onBuyNow}
-            disabled={isOutOfStock}
+            disabled={isOutOfStock || isExpired}
             className="flex-1 py-3.5 px-6 rounded-2xl bg-red-600 hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all duration-200 hover:-translate-y-0.5 shadow-lg shadow-red-600/25 cursor-pointer active:scale-[0.98]"
           >
-            <ShoppingBag className="w-5 h-5" />
-            <span>Buy Now</span>
+            {isExpired ? (
+              <span>Offer Ended</span>
+            ) : (
+              <>
+                <ShoppingBag className="w-5 h-5" />
+                <span>Buy Now</span>
+              </>
+            )}
           </button>
 
           {/* Wishlist Button */}

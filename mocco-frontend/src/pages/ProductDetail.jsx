@@ -120,6 +120,18 @@ export const ProductDetail = () => {
     e?.stopPropagation?.();
     if (isCartLoading) return;
 
+    const isEnded =
+      currentProduct?.status === "Ended" ||
+      (currentProduct?.endDate &&
+        new Date(currentProduct.endDate).getTime() < Date.now());
+
+    if (isEnded) {
+      toast.error(
+        "This promotional event has concluded and is no longer available for purchase."
+      );
+      return;
+    }
+
     if (isUserAuthenticated) {
       try {
         await dispatch(addToCart(productId, quantity));

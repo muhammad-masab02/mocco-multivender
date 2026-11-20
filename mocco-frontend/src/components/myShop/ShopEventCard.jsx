@@ -3,7 +3,7 @@ import { toTitle } from "./utils";
 import { Sparkles, Clock, Flame, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const ShopEventCard = ({ event }) => {
+const ShopEventCard = ({ event, isPast = false }) => {
   const navigate = useNavigate();
   const title = toTitle(event?.name || "Event");
   const imageUrl =
@@ -18,7 +18,10 @@ const ShopEventCard = ({ event }) => {
       })
     : "Ongoing";
 
-  const isExpired = event?.endDate && new Date(event.endDate).getTime() < Date.now();
+  const isExpired =
+    isPast ||
+    event?.status === "Ended" ||
+    (event?.endDate && new Date(event.endDate).getTime() < Date.now());
   const status = isExpired ? "Ended" : event?.status || "Running";
 
   const price = Number(event?.discount_price || event?.price || 0);
@@ -86,8 +89,13 @@ const ShopEventCard = ({ event }) => {
         {/* Date Badge */}
         <div className="absolute bottom-3 left-3 z-10">
           <div className="inline-flex items-center gap-1.5 rounded-xl bg-white/90 backdrop-blur-md px-3 py-1 shadow-sm border border-white/60 text-slate-800">
-            <Clock size={12} className="text-red-500" />
-            <span className="text-[11px] font-bold">Ends: {endsOn}</span>
+            <Clock
+              size={12}
+              className={status === "Ended" ? "text-slate-400" : "text-red-500"}
+            />
+            <span className="text-[11px] font-bold">
+              {status === "Ended" ? `Ended: ${endsOn}` : `Ends: ${endsOn}`}
+            </span>
           </div>
         </div>
       </div>

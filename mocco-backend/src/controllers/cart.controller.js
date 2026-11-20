@@ -57,6 +57,13 @@ const addToCart = catchAsyncErrors(async (req, res, next) => {
     const { product, itemModel } = await resolveItem(productId);
     if (!product) return next(new ErrorHandler("Product not found", 404));
 
+    if (itemModel === "Event") {
+        const isEnded = (product.endDate && new Date(product.endDate) < new Date()) || product.status === "Ended";
+        if (isEnded) {
+            return next(new ErrorHandler("This promotional event has ended and is no longer available for purchase.", 400));
+        }
+    }
+
     if (quantity > product.stock) {
         return next(new ErrorHandler(`Only ${product.stock} items left in stock`, 400));
     }
@@ -161,6 +168,11 @@ const mergeCart = catchAsyncErrors(async (req, res, next) => {
     for (let guestItem of items) {
         const { product, itemModel } = await resolveItem(guestItem.productId);
         if (product) {
+            // Do not merge expired events
+            if (itemModel === "Event" && ((product.endDate && new Date(product.endDate) < new Date()) || product.status === "Ended")) {
+                continue;
+            }
+
             const itemIndex = cart.items.findIndex(p => p.productId.toString() === guestItem.productId);
             if (itemIndex > -1) {
                 // Merge quantity safely respecting stock

@@ -43,6 +43,7 @@ const MyShop = () => {
   );
 
   const [activeTab, setActiveTab] = useState("products");
+  const [eventViewFilter, setEventViewFilter] = useState("active");
   const [shopView, setShopView] = useState(() => initialFormState({}));
   const [isShopLoading, setIsShopLoading] = useState(true);
   const [shopError, setShopError] = useState(null);
@@ -128,9 +129,26 @@ const MyShop = () => {
     return prods;
   }, [storeProducts, searchQuery, sortBy]);
 
-  const eventItems = useMemo(() => {
-    return Array.isArray(storeEvents) ? storeEvents : [];
+  const { activeEvents, pastEvents } = useMemo(() => {
+    const list = Array.isArray(storeEvents) ? storeEvents : [];
+    const now = Date.now();
+    const active = [];
+    const past = [];
+    list.forEach((evt) => {
+      const isEnded =
+        (evt.endDate && new Date(evt.endDate).getTime() < now) ||
+        evt.status === "Ended";
+      if (isEnded) {
+        past.push(evt);
+      } else {
+        active.push(evt);
+      }
+    });
+    return { activeEvents: active, pastEvents: past };
   }, [storeEvents]);
+
+  const displayedEvents =
+    eventViewFilter === "past" ? pastEvents : activeEvents;
 
   const reviewItems = useMemo(() => {
     if (shopReviews.length > 0) return shopReviews;
@@ -152,7 +170,7 @@ const MyShop = () => {
   }, [shopReviews, storeProducts]);
 
   const totalProducts = Array.isArray(storeProducts) ? storeProducts.length : 0;
-  const totalEvents = eventItems.length;
+  const totalEvents = activeEvents.length;
   const totalReviews = reviewItems.length;
 
   const handleLogout = () => {
@@ -382,26 +400,88 @@ const MyShop = () => {
 
             {/* TAB: EVENTS */}
             {activeTab === "events" && (
-              <div>
-                {isEventsLoading && totalEvents === 0 ? (
+              <div className="space-y-6">
+                {/* Sub-filter tabs if past campaigns exist */}
+                {pastEvents.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEventViewFilter("active")}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                        eventViewFilter === "active"
+                          ? "bg-slate-900 text-white shadow-sm"
+                          : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                      </span>
+                      <span>Active Deals ({activeEvents.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEventViewFilter("past")}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                        eventViewFilter === "past"
+                          ? "bg-slate-900 text-white shadow-sm"
+                          : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-slate-400" />
+                      <span>Past Campaigns ({pastEvents.length})</span>
+                    </button>
+                  </div>
+                )}
+
+                {isEventsLoading && displayedEvents.length === 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                     <ShopEventCardSkeleton count={6} />
                   </div>
-                ) : eventItems.length > 0 ? (
+                ) : displayedEvents.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                    {eventItems.map((event) => (
-                      <ShopEventCard key={event._id} event={event} />
+                    {displayedEvents.map((event) => (
+                      <ShopEventCard
+                        key={event._id}
+                        event={event}
+                        isPast={eventViewFilter === "past"}
+                      />
                     ))}
                   </div>
                 ) : (
                   <ShopEmptyState
                     iconType="events"
-                    title="No active sale events"
-                    subtitle="This store doesn't have any ongoing promotional sale events right now."
-                    actionLabel={isOwner ? "Create Event in Dashboard" : "View Platform Events"}
+                    title={
+                      eventViewFilter === "past"
+                        ? "No past campaigns"
+                        : "No active sale events"
+                    }
+                    subtitle={
+                      eventViewFilter === "past"
+                        ? "This store has no past promotional campaigns recorded."
+                        : pastEvents.length > 0
+                        ? "All previous promotional events have concluded. You can view past campaigns above."
+                        : "This store doesn't have any ongoing promotional sale events right now."
+                    }
+                    actionLabel={
+                      eventViewFilter === "past"
+                        ? "View Active Deals"
+                        : pastEvents.length > 0
+                        ? `View Past Campaigns (${pastEvents.length})`
+                        : isOwner
+                        ? "Create Event in Dashboard"
+                        : "View Platform Events"
+                    }
                     onAction={() => {
-                      if (isOwner) navigate("/shop-dashboard/?tab=createEvent");
-                      else navigate("/events");
+                      if (eventViewFilter === "past") {
+                        setEventViewFilter("active");
+                      } else if (pastEvents.length > 0) {
+                        setEventViewFilter("past");
+                      } else if (isOwner) {
+                        navigate("/shop-dashboard/?tab=createEvent");
+                      } else {
+                        navigate("/events");
+                      }
                     }}
                   />
                 )}

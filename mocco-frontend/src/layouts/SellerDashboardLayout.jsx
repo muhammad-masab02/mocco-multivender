@@ -72,6 +72,7 @@ const SellerDashboardLayout = () => {
           activeView={activeView}
           onTabChange={handleTabChange}
           onLogout={handleLogout}
+          seller={seller}
         />
 
         <main className="p-4 sm:p-6 lg:p-8 xl:p-10">

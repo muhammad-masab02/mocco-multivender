@@ -1,4 +1,10 @@
-import { LogOut } from "lucide-react";
+import { LogOut, Store, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { getImageUrl } from "../../utils/imageUrl";
+
+const SELLER_FALLBACK =
+  "https://dummyimage.com/120x120/e2e8f0/64748b.png&text=Seller";
 
 const colorTokens = {
   blue: "border-blue-100 bg-blue-50 text-blue-600",
@@ -69,14 +75,62 @@ const SidebarItem = ({ item, active, onClick }) => {
   );
 };
 
-const ShopDashboardSidebar = ({ items, activeView, onTabChange, onLogout }) => {
+const ShopDashboardSidebar = ({
+  items,
+  activeView,
+  onTabChange,
+  onLogout,
+  seller: propSeller,
+}) => {
+  const { seller: reduxSeller } = useSelector((state) => state.seller);
+  const seller = propSeller || reduxSeller;
+  const sellerName = seller?.name;
+  const sellerId = seller?._id;
+  const avatarSrc = getImageUrl(seller?.avatar?.url, SELLER_FALLBACK);
+
   return (
     <aside className="z-20 h-fit pb-10 border-b border-slate-200 bg-white xl:sticky xl:top-20 xl:border-r xl:border-b-0">
-      <div className="border-b border-slate-200 p-6">
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-          Shop Dashboard
-        </h2>
-        <p className="text-sm text-slate-500">Manage your store</p>
+      <div className="border-b border-slate-200 p-6 space-y-2">
+        <div>
+          <h2 className="text-lg font-bold pl-1 tracking-tight text-slate-900">
+            Shop Dashboard
+          </h2>
+        </div>
+
+        {sellerName && (
+          <Link
+            to={sellerId ? `/shop/${sellerId}` : "#"}
+            className="flex items-center gap-2.5 rounded-xl border border-slate-200/90 bg-slate-50/80 p-2.5 transition hover:bg-slate-100 hover:border-slate-300 group shadow-2xs"
+            title="View public storefront"
+          >
+            <div className="h-8 w-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+              <img
+                src={avatarSrc}
+                alt={sellerName}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = SELLER_FALLBACK;
+                }}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <Store size={12} className="text-red-500 shrink-0" />
+                <p className="text-xs font-bold text-slate-900 truncate group-hover:text-red-600 transition-colors">
+                  {sellerName}
+                </p>
+              </div>
+              <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5 font-medium">
+                <span>Live Storefront</span>
+                <ExternalLink
+                  size={10}
+                  className="text-slate-400 group-hover:text-red-500"
+                />
+              </p>
+            </div>
+          </Link>
+        )}
       </div>
 
       <nav className="space-y-2 p-4">
