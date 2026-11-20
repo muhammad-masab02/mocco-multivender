@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import HeroSection from "../components/home/HeroSection";
 import FlashSales from "../components/home/FlashSales";
@@ -21,6 +21,14 @@ import {
   ProductCardSkeleton,
   EventCardSkeleton,
 } from "../components/common/skeletons";
+import {
+  Zap,
+  ArrowRight,
+  Sparkles,
+  Timer,
+  TrendingUp,
+  Tag,
+} from "lucide-react";
 
 const MAX_HOME_EVENT_PRODUCTS = 6;
 const HOME_EVENT_SECONDARY_LIMIT = 4;
@@ -73,6 +81,32 @@ function Home() {
     1 + HOME_EVENT_SECONDARY_LIMIT,
   );
 
+  const hasActiveEvents = rankedEventProducts.length > 0;
+
+  // Compute max discount across events for the promo banner
+  const maxDiscount = useMemo(() => {
+    let max = 0;
+    rankedEventProducts.forEach((p) => {
+      const price = Number(p?.price || 0);
+      const dp = Number(p?.discount_price || price);
+      if (price > dp && price > 0) {
+        const pct = Math.round(((price - dp) / price) * 100);
+        if (pct > max) max = pct;
+      }
+    });
+    return max;
+  }, [rankedEventProducts]);
+
+  // Total items claimed across events
+  const totalClaimed = useMemo(
+    () =>
+      rankedEventProducts.reduce(
+        (acc, p) => acc + Number(p?.total_sell || 0),
+        0,
+      ),
+    [rankedEventProducts],
+  );
+
   // handle category click and navigate
   const handleCategoryClick = (category) => {
     navigate(`products?category=${category.toLowerCase()}`);
@@ -115,65 +149,140 @@ function Home() {
         )}
       </section>
 
-      <section className="w-full py-12 px-5">
-        <div className="max-w-7xl mx-auto rounded-3xl border border-slate-200 bg-linear-to-br from-white via-rose-50/40 to-slate-50 p-5 sm:p-7 lg:p-9 shadow-xl shadow-slate-200/60">
-          <div className="mb-10 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h3 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-                Event Products
-              </h3>
-              <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
-                Explore curated, time-limited offers from trusted Mocco sellers.
-                Each event highlights verified discounts and real-time stock.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate("/events")}
-              className="w-fit rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-red-300 hover:text-red-600"
-            >
-              View all events
-            </button>
-          </div>
+      {/* ═══════════════════════ EVENTS SECTION ═══════════════════════
+           Hidden entirely when no active events & finished loading      */}
+      {(isEventsLoading || hasActiveEvents) && (
+        <section className="w-full py-12 px-5 relative overflow-hidden">
+          {/* Decorative background layer */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-red-950 -z-10" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_40%,rgba(239,68,68,0.15),transparent_55%)] -z-10" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(251,146,60,0.1),transparent_55%)] -z-10" />
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500/40 to-transparent" />
+          <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500/40 to-transparent" />
 
-          {isEventsLoading && !heroEventProduct ? (
-            <div className="space-y-5">
-              <EventCardSkeleton variant="hero" />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <EventCardSkeleton variant="compact" count={4} />
-              </div>
-            </div>
-          ) : heroEventProduct ? (
-            <div className="space-y-5">
-              <EventCard eventProduct={heroEventProduct} showMoreCta={false} />
+          <div className="max-w-7xl mx-auto relative">
+            {/* ── Top Promo Banner Bar ─────────────────────────────────── */}
+            <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-3">
+                {/* Animated event badge */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-red-500/20 backdrop-blur-sm border border-red-500/30 px-3.5 py-1.5 text-xs font-bold text-red-400 uppercase tracking-widest">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                    </span>
+                    Live Flash Events
+                  </span>
 
-              {secondaryEventProducts.length > 0 && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  {secondaryEventProducts.map((eventProduct, index) => {
-                    const productId =
-                      eventProduct?._id || eventProduct?.id || index;
-                    const hideOnMobile =
-                      index >= MOBILE_VISIBLE_SECONDARY_EVENTS;
-
-                    return (
-                      <EventCard
-                        key={productId}
-                        eventProduct={eventProduct}
-                        variant="compact"
-                        className={hideOnMobile ? "hidden sm:block" : ""}
-                      />
-                    );
-                  })}
+                  {maxDiscount > 0 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1 text-xs font-extrabold text-white shadow-lg shadow-amber-500/25">
+                      <Sparkles size={12} className="fill-white" />
+                      Up to {maxDiscount}% Off
+                    </span>
+                  )}
                 </div>
-              )}
+
+                <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+                  Exclusive Limited-Time{" "}
+                  <span className="bg-gradient-to-r from-red-400 via-rose-400 to-amber-400 bg-clip-text text-transparent">
+                    Flash Deals
+                  </span>
+                </h3>
+
+                <p className="max-w-2xl text-sm sm:text-base text-slate-400 leading-relaxed">
+                  Curated time-limited offers from verified Mocco sellers.
+                  Real-time stock, verified discounts — grab them before they're gone.
+                </p>
+
+                {/* Quick stats pills */}
+                {hasActiveEvents && (
+                  <div className="flex flex-wrap items-center gap-3 pt-1">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1.5">
+                      <Zap size={12} className="text-amber-400 fill-amber-400" />
+                      {rankedEventProducts.length} Active{" "}
+                      {rankedEventProducts.length === 1 ? "Deal" : "Deals"}
+                    </span>
+
+                    {totalClaimed > 0 && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1.5">
+                        <TrendingUp size={12} className="text-emerald-400" />
+                        {totalClaimed.toLocaleString()} Claimed
+                      </span>
+                    )}
+
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1.5">
+                      <Timer size={12} className="text-red-400" />
+                      Ending Soon
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate("/events")}
+                className="group w-fit flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white hover:text-slate-900 px-5 py-2.5 text-sm font-bold text-white transition-all duration-200 hover:shadow-lg hover:shadow-white/10 cursor-pointer"
+              >
+                <Tag size={14} />
+                <span>View All Events</span>
+                <ArrowRight
+                  size={14}
+                  className="transition-transform group-hover:translate-x-0.5"
+                />
+              </button>
             </div>
-          ) : (
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">
-              No active event products found right now.
-            </div>
-          )}
-        </div>
-      </section>
+
+            {/* ── Event Cards ──────────────────────────────────────────── */}
+            {isEventsLoading && !heroEventProduct ? (
+              <div className="space-y-5">
+                <EventCardSkeleton variant="hero" />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <EventCardSkeleton variant="compact" count={4} />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                <EventCard eventProduct={heroEventProduct} showMoreCta={false} />
+
+                {secondaryEventProducts.length > 0 && (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    {secondaryEventProducts.map((eventProduct, index) => {
+                      const productId =
+                        eventProduct?._id || eventProduct?.id || index;
+                      const hideOnMobile =
+                        index >= MOBILE_VISIBLE_SECONDARY_EVENTS;
+
+                      return (
+                        <EventCard
+                          key={productId}
+                          eventProduct={eventProduct}
+                          variant="compact"
+                          className={hideOnMobile ? "hidden sm:block" : ""}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Bottom browse-more bar */}
+                <div className="flex items-center justify-center pt-4">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/events")}
+                    className="group inline-flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                  >
+                    <span>Browse All Active Events</span>
+                    <ArrowRight
+                      size={14}
+                      className="transition-transform group-hover:translate-x-1"
+                    />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="w-full max-w-7xl px-5 py-8 space-y-8 sm:space-y-12">
         {isFeaturedLoading ? (
